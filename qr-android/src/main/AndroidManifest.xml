@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        CAMERA 권한은 선언하지 않는다 — 앱이 직접 선언하고 요청한다(설치 동의 목록에 무엇이 뜨는지 앱이 정한다).
+        카메라가 없거나 요청한 방향의 카메라가 없는 기기는 CameraStatus.NoCamera 로 알리므로, 앱의 CAMERA 선언 때문에
+        Play 가 카메라를 필수 하드웨어로 추정하지 않게 선택 사항으로 둔다. 앱이 required="true" 를 선언하면 그쪽이 이긴다.
+    -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+</manifest>

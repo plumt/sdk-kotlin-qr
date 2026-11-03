@@ -1,0 +1,627 @@
+public final class net/plumt/qr/scanner/AnalysisResolution : java/lang/Enum {
+	public static final field AUTO Lnet/plumt/qr/scanner/AnalysisResolution;
+	public static final field HIGH Lnet/plumt/qr/scanner/AnalysisResolution;
+	public static final field STANDARD Lnet/plumt/qr/scanner/AnalysisResolution;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/scanner/AnalysisResolution;
+	public static fun values ()[Lnet/plumt/qr/scanner/AnalysisResolution;
+}
+
+public final class net/plumt/qr/scanner/AutoDeliverOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (JJ)V
+	public synthetic fun <init> (JJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun copy (JJ)Lnet/plumt/qr/scanner/AutoDeliverOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/AutoDeliverOptions;JJILjava/lang/Object;)Lnet/plumt/qr/scanner/AutoDeliverOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRepeatWindowMillis ()J
+	public final fun getStableMillis ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CameraLens : java/lang/Enum {
+	public static final field BACK Lnet/plumt/qr/scanner/CameraLens;
+	public static final field FRONT Lnet/plumt/qr/scanner/CameraLens;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/scanner/CameraLens;
+	public static fun values ()[Lnet/plumt/qr/scanner/CameraLens;
+}
+
+public abstract interface class net/plumt/qr/scanner/CameraStatus {
+}
+
+public final class net/plumt/qr/scanner/CameraStatus$Error : net/plumt/qr/scanner/CameraStatus {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/scanner/ScannerException;)V
+	public final fun component1 ()Lnet/plumt/qr/scanner/ScannerException;
+	public final fun copy (Lnet/plumt/qr/scanner/ScannerException;)Lnet/plumt/qr/scanner/CameraStatus$Error;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/CameraStatus$Error;Lnet/plumt/qr/scanner/ScannerException;ILjava/lang/Object;)Lnet/plumt/qr/scanner/CameraStatus$Error;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lnet/plumt/qr/scanner/ScannerException;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CameraStatus$NoCamera : net/plumt/qr/scanner/CameraStatus {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/CameraStatus$NoCamera;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CameraStatus$PermissionRequired : net/plumt/qr/scanner/CameraStatus {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/CameraStatus$PermissionRequired;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CameraStatus$Running : net/plumt/qr/scanner/CameraStatus {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/CameraStatus$Running;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CameraStatus$Starting : net/plumt/qr/scanner/CameraStatus {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/CameraStatus$Starting;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CodeBounds {
+	public static final field $stable I
+	public fun <init> (FFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun contains (FF)Z
+	public final fun contains (Lkotlin/Pair;)Z
+	public final fun copy (FFFF)Lnet/plumt/qr/scanner/CodeBounds;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/CodeBounds;FFFFILjava/lang/Object;)Lnet/plumt/qr/scanner/CodeBounds;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()F
+	public final fun getCenterX ()F
+	public final fun getCenterY ()F
+	public final fun getHeight ()F
+	public final fun getLeft ()F
+	public final fun getRight ()F
+	public final fun getTop ()F
+	public final fun getWidth ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/CodeScannerPreviewKt {
+	public static final fun CodeScannerPreview (Lnet/plumt/qr/scanner/ScannerState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+	public static final fun rememberScannerState (Lnet/plumt/qr/scanner/ScanMode;Lnet/plumt/qr/scanner/ScannerOptions;Landroidx/compose/runtime/Composer;II)Lnet/plumt/qr/scanner/ScannerState;
+}
+
+public final class net/plumt/qr/scanner/Detection {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/ScanResult;Lnet/plumt/qr/scanner/CodeBounds;)V
+	public final fun component1 ()Lnet/plumt/qr/ScanResult;
+	public final fun component2 ()Lnet/plumt/qr/scanner/CodeBounds;
+	public final fun copy (Lnet/plumt/qr/ScanResult;Lnet/plumt/qr/scanner/CodeBounds;)Lnet/plumt/qr/scanner/Detection;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/Detection;Lnet/plumt/qr/ScanResult;Lnet/plumt/qr/scanner/CodeBounds;ILjava/lang/Object;)Lnet/plumt/qr/scanner/Detection;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBounds ()Lnet/plumt/qr/scanner/CodeBounds;
+	public final fun getResult ()Lnet/plumt/qr/ScanResult;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/LockOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()I
+	public final fun copy (FI)Lnet/plumt/qr/scanner/LockOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/LockOptions;FIILjava/lang/Object;)Lnet/plumt/qr/scanner/LockOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHysteresis ()F
+	public final fun getSwitchFrames ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/PreviewScaleMode : java/lang/Enum {
+	public static final field FILL Lnet/plumt/qr/scanner/PreviewScaleMode;
+	public static final field FIT Lnet/plumt/qr/scanner/PreviewScaleMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/scanner/PreviewScaleMode;
+	public static fun values ()[Lnet/plumt/qr/scanner/PreviewScaleMode;
+}
+
+public abstract interface class net/plumt/qr/scanner/ScanEngine : java/lang/AutoCloseable {
+	public abstract fun close ()V
+	public abstract fun detect (Lnet/plumt/qr/scanner/ScanFrame;)Ljava/util/List;
+}
+
+public abstract interface class net/plumt/qr/scanner/ScanEngine$Factory {
+	public abstract fun create (Landroid/content/Context;Ljava/util/Set;)Lnet/plumt/qr/scanner/ScanEngine;
+}
+
+public final class net/plumt/qr/scanner/ScanEngines {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/ScanEngines;
+	public static final fun mlKit ()Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public static final fun zxing ()Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public static final fun zxing (Z)Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public static final fun zxing (ZZ)Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public static synthetic fun zxing$default (ZZILjava/lang/Object;)Lnet/plumt/qr/scanner/ScanEngine$Factory;
+}
+
+public final class net/plumt/qr/scanner/ScanFrame {
+	public static final field $stable I
+	public fun <init> ([BIIIIJ)V
+	public synthetic fun <init> ([BIIIIJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHeight ()I
+	public final fun getLuminance ()[B
+	public final fun getRotationDegrees ()I
+	public final fun getRowStride ()I
+	public final fun getTimestampNanos ()J
+	public final fun getUprightHeight ()I
+	public final fun getUprightWidth ()I
+	public final fun getWidth ()I
+}
+
+public abstract interface class net/plumt/qr/scanner/ScanMode {
+}
+
+public final class net/plumt/qr/scanner/ScanMode$Multi : net/plumt/qr/scanner/ScanMode {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/ScanMode$Multi;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/ScanMode$Single : net/plumt/qr/scanner/ScanMode {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun copy (Z)Lnet/plumt/qr/scanner/ScanMode$Single;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/ScanMode$Single;ZILjava/lang/Object;)Lnet/plumt/qr/scanner/ScanMode$Single;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoDeliver ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/ScannerComposablesKt {
+	public static final fun CodeScanner (Lnet/plumt/qr/scanner/ScanMode;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/ScannerOptions;Lnet/plumt/qr/scanner/ScannerState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun QrCodeChip (Lnet/plumt/qr/scanner/TrackedCode;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/time/ZoneId;Landroidx/compose/runtime/Composer;II)V
+}
+
+public final class net/plumt/qr/scanner/ScannerDefaults {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/ScannerDefaults;
+	public static final field SUMMARY_MAX_LENGTH I
+	public static final fun actionLabelRes (Lnet/plumt/qr/scanner/action/QrAction;)I
+	public static final fun summary (Lnet/plumt/qr/ScanResult;)Ljava/lang/String;
+	public static final fun summary (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;)Ljava/lang/String;
+	public static final fun summary (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;I)Ljava/lang/String;
+	public static synthetic fun summary$default (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;IILjava/lang/Object;)Ljava/lang/String;
+	public static final fun typeLabelRes (Lnet/plumt/qr/QrPayload;)I
+	public static final fun warningRes (Lnet/plumt/qr/scanner/action/UrlWarning;)I
+}
+
+public final class net/plumt/qr/scanner/ScannerException : java/lang/RuntimeException {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class net/plumt/qr/scanner/ScannerOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lnet/plumt/qr/scanner/CameraLens;Lnet/plumt/qr/scanner/PreviewScaleMode;Lnet/plumt/qr/scanner/TrackingOptions;Lnet/plumt/qr/scanner/LockOptions;Lnet/plumt/qr/scanner/AutoDeliverOptions;Lnet/plumt/qr/scanner/AnalysisResolution;ZZLjava/time/ZoneId;)V
+	public synthetic fun <init> (Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lnet/plumt/qr/scanner/CameraLens;Lnet/plumt/qr/scanner/PreviewScaleMode;Lnet/plumt/qr/scanner/TrackingOptions;Lnet/plumt/qr/scanner/LockOptions;Lnet/plumt/qr/scanner/AutoDeliverOptions;Lnet/plumt/qr/scanner/AnalysisResolution;ZZLjava/time/ZoneId;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component10 ()Z
+	public final fun component11 ()Ljava/time/ZoneId;
+	public final fun component2 ()Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public final fun component3 ()Lnet/plumt/qr/scanner/CameraLens;
+	public final fun component4 ()Lnet/plumt/qr/scanner/PreviewScaleMode;
+	public final fun component5 ()Lnet/plumt/qr/scanner/TrackingOptions;
+	public final fun component6 ()Lnet/plumt/qr/scanner/LockOptions;
+	public final fun component7 ()Lnet/plumt/qr/scanner/AutoDeliverOptions;
+	public final fun component8 ()Lnet/plumt/qr/scanner/AnalysisResolution;
+	public final fun component9 ()Z
+	public final fun copy (Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lnet/plumt/qr/scanner/CameraLens;Lnet/plumt/qr/scanner/PreviewScaleMode;Lnet/plumt/qr/scanner/TrackingOptions;Lnet/plumt/qr/scanner/LockOptions;Lnet/plumt/qr/scanner/AutoDeliverOptions;Lnet/plumt/qr/scanner/AnalysisResolution;ZZLjava/time/ZoneId;)Lnet/plumt/qr/scanner/ScannerOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/ScannerOptions;Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lnet/plumt/qr/scanner/CameraLens;Lnet/plumt/qr/scanner/PreviewScaleMode;Lnet/plumt/qr/scanner/TrackingOptions;Lnet/plumt/qr/scanner/LockOptions;Lnet/plumt/qr/scanner/AutoDeliverOptions;Lnet/plumt/qr/scanner/AnalysisResolution;ZZLjava/time/ZoneId;ILjava/lang/Object;)Lnet/plumt/qr/scanner/ScannerOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAnalysisResolution ()Lnet/plumt/qr/scanner/AnalysisResolution;
+	public final fun getAutoDeliver ()Lnet/plumt/qr/scanner/AutoDeliverOptions;
+	public final fun getEffectiveResolution ()Lnet/plumt/qr/scanner/AnalysisResolution;
+	public final fun getEngine ()Lnet/plumt/qr/scanner/ScanEngine$Factory;
+	public final fun getFormats ()Ljava/util/Set;
+	public final fun getLens ()Lnet/plumt/qr/scanner/CameraLens;
+	public final fun getLock ()Lnet/plumt/qr/scanner/LockOptions;
+	public final fun getPinchToZoom ()Z
+	public final fun getScaleMode ()Lnet/plumt/qr/scanner/PreviewScaleMode;
+	public final fun getTapToFocus ()Z
+	public final fun getTracking ()Lnet/plumt/qr/scanner/TrackingOptions;
+	public final fun getZone ()Ljava/time/ZoneId;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/ScannerState {
+	public static final field $stable I
+	public final fun clearError ()V
+	public final fun codeAt (FF)Lnet/plumt/qr/scanner/TrackedCode;
+	public final fun focusAt (FF)Z
+	public final fun getCameraStatus ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getCodes ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getDeliveries ()Lkotlinx/coroutines/flow/SharedFlow;
+	public final fun getError ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getLockedCode ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getMode ()Lnet/plumt/qr/scanner/ScanMode;
+	public final fun getOptions ()Lnet/plumt/qr/scanner/ScannerOptions;
+	public final fun getTorch ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun getZoom ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun isPaused ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun refreshPermission ()Z
+	public final fun setPaused (Z)V
+	public final fun setTorchEnabled (Z)Z
+	public final fun setZoomRatio (F)Z
+	public final fun zoomBy (F)Z
+}
+
+public final class net/plumt/qr/scanner/TorchState {
+	public static final field $stable I
+	public fun <init> (ZZ)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun copy (ZZ)Lnet/plumt/qr/scanner/TorchState;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/TorchState;ZZILjava/lang/Object;)Lnet/plumt/qr/scanner/TorchState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAvailable ()Z
+	public final fun getEnabled ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/TrackedCode {
+	public static final field $stable I
+	public fun <init> (JLnet/plumt/qr/ScanResult;Lnet/plumt/qr/scanner/CodeBounds;IZ)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBounds ()Lnet/plumt/qr/scanner/CodeBounds;
+	public final fun getId ()J
+	public final fun getMissedFrames ()I
+	public final fun getResult ()Lnet/plumt/qr/ScanResult;
+	public fun hashCode ()I
+	public final fun isLocked ()Z
+	public final fun isStale ()Z
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/TrackingOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (IFF)V
+	public synthetic fun <init> (IFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (IFF)Lnet/plumt/qr/scanner/TrackingOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/TrackingOptions;IFFILjava/lang/Object;)Lnet/plumt/qr/scanner/TrackingOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIouThreshold ()F
+	public final fun getMaxMissedFrames ()I
+	public final fun getSmoothing ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/ZoomState {
+	public static final field $stable I
+	public fun <init> (FFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (FFF)Lnet/plumt/qr/scanner/ZoomState;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/ZoomState;FFFILjava/lang/Object;)Lnet/plumt/qr/scanner/ZoomState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMax ()F
+	public final fun getMin ()F
+	public final fun getRatio ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/plumt/qr/scanner/action/QrAction {
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$AddContact : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Contact;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Contact;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Contact;)Lnet/plumt/qr/scanner/action/QrAction$AddContact;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$AddContact;Lnet/plumt/qr/QrPayload$Contact;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$AddContact;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContact ()Lnet/plumt/qr/QrPayload$Contact;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$AddEvent : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Event;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Event;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Event;)Lnet/plumt/qr/scanner/action/QrAction$AddEvent;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$AddEvent;Lnet/plumt/qr/QrPayload$Event;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$AddEvent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEvent ()Lnet/plumt/qr/QrPayload$Event;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$AddOtp : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Otp;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Otp;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Otp;)Lnet/plumt/qr/scanner/action/QrAction$AddOtp;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$AddOtp;Lnet/plumt/qr/QrPayload$Otp;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$AddOtp;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOtp ()Lnet/plumt/qr/QrPayload$Otp;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$ConnectWifi : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Wifi;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Wifi;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Wifi;)Lnet/plumt/qr/scanner/action/QrAction$ConnectWifi;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$ConnectWifi;Lnet/plumt/qr/QrPayload$Wifi;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$ConnectWifi;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getWifi ()Lnet/plumt/qr/QrPayload$Wifi;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$CopyOtpSecret : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Otp;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Otp;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Otp;)Lnet/plumt/qr/scanner/action/QrAction$CopyOtpSecret;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$CopyOtpSecret;Lnet/plumt/qr/QrPayload$Otp;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$CopyOtpSecret;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOtp ()Lnet/plumt/qr/QrPayload$Otp;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$CopyText : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/lang/String;Z)Lnet/plumt/qr/scanner/action/QrAction$CopyText;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$CopyText;Ljava/lang/String;ZILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$CopyText;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSensitive ()Z
+	public final fun getText ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$CopyWifiPassword : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Wifi;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Wifi;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Wifi;)Lnet/plumt/qr/scanner/action/QrAction$CopyWifiPassword;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$CopyWifiPassword;Lnet/plumt/qr/QrPayload$Wifi;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$CopyWifiPassword;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getWifi ()Lnet/plumt/qr/QrPayload$Wifi;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$Dial : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$Dial;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$Dial;Ljava/lang/String;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$Dial;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNumber ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$OpenUrl : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/util/Set;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDisplayHost ()Ljava/lang/String;
+	public final fun getHost ()Ljava/lang/String;
+	public final fun getUrl ()Ljava/lang/String;
+	public final fun getWarnings ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$SearchProduct : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$SearchProduct;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$SearchProduct;Ljava/lang/String;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$SearchProduct;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$SendEmail : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$SendEmail;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$SendEmail;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$SendEmail;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAddress ()Ljava/lang/String;
+	public final fun getBody ()Ljava/lang/String;
+	public final fun getSubject ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$SendSms : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$SendSms;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$SendSms;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$SendSms;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getNumber ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrAction$ShowLocation : net/plumt/qr/scanner/action/QrAction {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/QrPayload$Geo;)V
+	public final fun component1 ()Lnet/plumt/qr/QrPayload$Geo;
+	public final fun copy (Lnet/plumt/qr/QrPayload$Geo;)Lnet/plumt/qr/scanner/action/QrAction$ShowLocation;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$ShowLocation;Lnet/plumt/qr/QrPayload$Geo;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$ShowLocation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGeo ()Lnet/plumt/qr/QrPayload$Geo;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionConfirmationKt {
+	public static final fun QrActionConfirmation (Lnet/plumt/qr/scanner/action/QrAction;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+}
+
+public abstract interface class net/plumt/qr/scanner/action/QrActionExecutor {
+	public static final field Companion Lnet/plumt/qr/scanner/action/QrActionExecutor$Companion;
+	public static fun default ()Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public static fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public abstract fun execute (Landroid/content/Context;Lnet/plumt/qr/scanner/action/QrAction;)Lnet/plumt/qr/scanner/action/QrActionResult;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionExecutor$Companion {
+	public final fun default ()Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public final fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public static synthetic fun default$default (Lnet/plumt/qr/scanner/action/QrActionExecutor$Companion;Lnet/plumt/qr/scanner/action/QrActionOptions;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionOptions {
+	public static final field $stable I
+	public fun <init> ()V
+	public fun <init> (ZLjava/lang/String;Ljava/time/ZoneId;)V
+	public synthetic fun <init> (ZLjava/lang/String;Ljava/time/ZoneId;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/time/ZoneId;
+	public final fun copy (ZLjava/lang/String;Ljava/time/ZoneId;)Lnet/plumt/qr/scanner/action/QrActionOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrActionOptions;ZLjava/lang/String;Ljava/time/ZoneId;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrActionOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClipLabel ()Ljava/lang/String;
+	public final fun getCopyWifiPasswordOnFallback ()Z
+	public final fun getZone ()Ljava/time/ZoneId;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/plumt/qr/scanner/action/QrActionResult {
+}
+
+public final class net/plumt/qr/scanner/action/QrActionResult$Copied : net/plumt/qr/scanner/action/QrActionResult {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/action/QrActionResult$Copied;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionResult$Failed : net/plumt/qr/scanner/action/QrActionResult {
+	public static final field $stable I
+	public fun <init> (Lnet/plumt/qr/scanner/ScannerException;)V
+	public final fun component1 ()Lnet/plumt/qr/scanner/ScannerException;
+	public final fun copy (Lnet/plumt/qr/scanner/ScannerException;)Lnet/plumt/qr/scanner/action/QrActionResult$Failed;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrActionResult$Failed;Lnet/plumt/qr/scanner/ScannerException;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrActionResult$Failed;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Lnet/plumt/qr/scanner/ScannerException;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionResult$NoHandler : net/plumt/qr/scanner/action/QrActionResult {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/action/QrActionResult$NoHandler;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionResult$Started : net/plumt/qr/scanner/action/QrActionResult {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/action/QrActionResult$Started;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActionResult$WifiSettingsOpened : net/plumt/qr/scanner/action/QrActionResult {
+	public static final field $stable I
+	public fun <init> (Z)V
+	public final fun component1 ()Z
+	public final fun copy (Z)Lnet/plumt/qr/scanner/action/QrActionResult$WifiSettingsOpened;
+	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrActionResult$WifiSettingsOpened;ZILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrActionResult$WifiSettingsOpened;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPasswordCopied ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/QrActions {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/action/QrActions;
+	public static final fun all (Lnet/plumt/qr/ScanResult;)Ljava/util/List;
+	public static final fun openUrl (Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
+	public static final fun primary (Lnet/plumt/qr/QrPayload;)Lnet/plumt/qr/scanner/action/QrAction;
+}
+
+public final class net/plumt/qr/scanner/action/UrlWarning : java/lang/Enum {
+	public static final field INTERNATIONALIZED Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static final field IP_ADDRESS Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static final field NOT_HTTPS Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static final field UNREADABLE_HOST Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static final field USER_INFO Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static fun values ()[Lnet/plumt/qr/scanner/action/UrlWarning;
+}
+

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="plumt_qr_type_url">링크</string>
+    <string name="plumt_qr_type_text">텍스트</string>
+    <string name="plumt_qr_type_wifi">Wi-Fi</string>
+    <string name="plumt_qr_type_contact">연락처</string>
+    <string name="plumt_qr_type_email">이메일</string>
+    <string name="plumt_qr_type_phone">전화</string>
+    <string name="plumt_qr_type_sms">문자</string>
+    <string name="plumt_qr_type_event">일정</string>
+    <string name="plumt_qr_type_geo">위치</string>
+    <string name="plumt_qr_type_otp">OTP</string>
+    <string name="plumt_qr_type_product">상품</string>
+
+    <string name="plumt_qr_action_open_url">링크 열기</string>
+    <string name="plumt_qr_action_connect_wifi">Wi-Fi 연결</string>
+    <string name="plumt_qr_action_copy_wifi_password">비밀번호 복사</string>
+    <string name="plumt_qr_action_add_contact">연락처 추가</string>
+    <string name="plumt_qr_action_add_event">일정 추가</string>
+    <string name="plumt_qr_action_dial">전화 걸기</string>
+    <string name="plumt_qr_action_send_sms">문자 보내기</string>
+    <string name="plumt_qr_action_send_email">메일 보내기</string>
+    <string name="plumt_qr_action_show_location">지도에서 보기</string>
+    <string name="plumt_qr_action_add_otp">인증 앱에 추가</string>
+    <string name="plumt_qr_action_copy_otp_secret">비밀 키 복사</string>
+    <string name="plumt_qr_action_search_product">상품 검색</string>
+    <string name="plumt_qr_action_copy_text">복사</string>
+
+    <string name="plumt_qr_confirm_cancel">취소</string>
+    <string name="plumt_qr_confirm_url_title">이 사이트를 열까요?</string>
+    <string name="plumt_qr_confirm_real_host">실제 접속 주소: %1$s</string>
+    <string name="plumt_qr_warning_not_https">암호화되지 않는 링크(http)입니다.</string>
+    <string name="plumt_qr_warning_user_info">주소에 사용자 이름 부분이 들어 있습니다. 실제 사이트는 위에 보인 주소입니다.</string>
+    <string name="plumt_qr_warning_internationalized">영문이 아닌 글자를 쓴 주소입니다. 다른 사이트를 흉내 낸 주소일 수 있습니다.</string>
+    <string name="plumt_qr_warning_ip_address">도메인이 아니라 IP 주소로 가는 링크입니다.</string>
+    <string name="plumt_qr_warning_unreadable_host">사이트 주소를 읽지 못했습니다.</string>
+    <string name="plumt_qr_code_description">%1$s: %2$s</string>
+</resources>
