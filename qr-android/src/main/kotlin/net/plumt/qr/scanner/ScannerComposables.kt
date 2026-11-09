@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,6 +54,7 @@ import java.time.ZoneId
  * @param onError 카메라·엔진 오류. 엔진 오류는 카메라 세션마다 처음 한 건만 온다
  * @param state 낮은 단계 상태. 플래시·확대·멈춤을 밖에서 조작하려면 [rememberScannerState] 로 만들어 넘긴다
  * @param chip 칩 모양을 바꾼다. 기본 [QrCodeChip]
+ * @param onFrame 분석한 카메라 프레임을 함께 받는다(분석 스레드). 같은 카메라로 글자 인식 같은 다른 분석을 돌릴 때 쓴다 — [FrameListener]
  */
 @Composable
 public fun CodeScanner(
@@ -63,6 +65,7 @@ public fun CodeScanner(
     state: ScannerState = rememberScannerState(mode, options),
     onError: (ScannerException) -> Unit = {},
     permissionContent: @Composable () -> Unit = {},
+    onFrame: FrameListener? = null,
     chip: @Composable (code: TrackedCode, onClick: () -> Unit) -> Unit = { code, onClick ->
         QrCodeChip(code = code, onClick = onClick, zone = state.options.zone)
     },
@@ -71,6 +74,13 @@ public fun CodeScanner(
     val error by rememberUpdatedState(onError)
     val status by state.cameraStatus.collectAsState()
     val codes by state.codes.collectAsState()
+
+    val frame by rememberUpdatedState(onFrame)
+    val listening = onFrame != null
+    DisposableEffect(state, listening) {
+        if (listening) state.setFrameListener { f, d -> frame?.onFrame(f, d) }
+        onDispose { if (listening) state.setFrameListener(null) }
+    }
 
     LaunchedEffect(state) { state.deliveries.collect { tap(it) } }
     LaunchedEffect(state) {

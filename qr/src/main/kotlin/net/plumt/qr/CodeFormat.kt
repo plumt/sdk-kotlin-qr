@@ -47,5 +47,26 @@ public enum class CodeFormat(public val kind: Kind) {
         /** 지원하는 모든 형식. */
         @JvmField
         public val ALL: Set<CodeFormat> = entries.toSet()
+
+        private val BY_KEY: Map<String, CodeFormat> = entries.associateBy { key(it.name) }
+
+        /**
+         * 저장해 둔 형식 이름을 되읽는다. 대소문자와 `_`·`-`·공백을 가리지 않는다 — `PDF_417`·`PDF417`·`pdf-417`, `EAN13`·`ean_13` 이
+         * 모두 같은 형식이다(다른 라이브러리·이전 버전이 밑줄 없이 쓴 이름도 읽는다). 모르는 이름이면 null 이다 — `valueOf` 와 달리
+         * 던지지 않아, 기록을 읽다가 손상된 행 하나로 화면이 죽지 않는다. 저장할 때는 [name] 을 쓴다.
+         */
+        @JvmStatic
+        public fun fromName(name: String): CodeFormat? = BY_KEY[key(name)]
+
+        // ASCII 소문자만 대문자로 바꾼다 — uppercaseChar 는 'ı'(터키어)를 'I' 로 바꿔 다른 이름을 같은 형식으로 읽는다
+        private fun key(name: String): String = buildString {
+            name.forEach { c ->
+                when (c) {
+                    '_', '-', ' ' -> Unit
+                    in 'a'..'z' -> append(c - ('a' - 'A'))
+                    else -> append(c)
+                }
+            }
+        }
     }
 }

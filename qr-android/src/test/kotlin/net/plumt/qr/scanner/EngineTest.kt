@@ -104,6 +104,69 @@ class ZxingEngineTest {
         assertTrue(d.bounds.centerY in 270f..370f)
     }
 
+    /** 세운 W x H 이미지에 1차원 바코드를 (ox, oy) 에 그린다. vertical 이면 막대가 가로로 눕도록(바코드를 90도 세워) 그린다. */
+    private fun linearUpright(text: String, format: CodeFormat, w: Int, h: Int, ox: Int, oy: Int, vertical: Boolean): Pair<ByteArray, CodeBounds> {
+        val m = QrBarcode.encode(text, format, BarcodeOptions(width = 300, height = 100))
+        val horizontal = luminanceOf(m, m.width, m.height, 0, 0, 1)
+        val (code, cw, ch) = if (vertical) unrotate(horizontal, m.width, m.height, 90) else Triple(horizontal, m.width, m.height)
+        val out = ByteArray(w * h) { 0xFF.toByte() }
+        for (y in 0 until ch) for (x in 0 until cw) out[(oy + y) * w + ox + x] = code[y * cw + x]
+        return out to CodeBounds(ox.toFloat(), oy.toFloat(), (ox + cw).toFloat(), (oy + ch).toFloat())
+    }
+
+    @Test
+    fun linearBarcode_crossingSensorRows_isReadByRotatedPass() {
+        // 세로 화면(센서 버퍼 rotationDegrees=90)에서 바코드를 화면 가로로 든 경우 — 버퍼 안에서는 막대가 세로로 서 있지 않고 누워 있다
+        for ((text, format) in listOf("4006381333931" to CodeFormat.EAN_13, "PLUMT-128" to CodeFormat.CODE_128)) {
+            for (vertical in listOf(false, true)) {
+                for (r in listOf(0, 90, 180, 270)) {
+                    val (upright, truth) = linearUpright(text, format, 480, 640, 90, 200, vertical)
+                    val (buf, bw, bh) = unrotate(upright, 480, 640, r)
+                    val out = ZxingEngine(ReadOptions(formats = setOf(format))).detect(ScanFrame(buf, bw, bh, rotationDegrees = r))
+                    val d = out.singleOrNull() ?: throw AssertionError("$format vertical=$vertical r=$r 를 읽지 못했다: $out")
+                    assertEquals(text, d.result.text)
+                    assertEquals(format, d.result.format)
+                    // 점·박스는 세운 이미지 좌표 — 바코드 위에 있다
+                    d.result.points.forEach { p ->
+                        assertTrue("$format vertical=$vertical r=$r 점 $p 가 $truth 밖", p.x in truth.left - 2f..truth.right + 2f && p.y in truth.top - 2f..truth.bottom + 2f)
+                    }
+                    assertTrue("$format vertical=$vertical r=$r 박스 ${d.bounds} 가운데가 $truth 밖", truth.contains(d.bounds.centerX, d.bounds.centerY))
+                    assertEquals("$format vertical=$vertical r=$r 박스 방향", !vertical, d.bounds.width > d.bounds.height)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun rotatedPass_onlyForLinearFormats_andMergesWithoutDuplicates() {
+        val calls = ArrayList<Pair<Set<CodeFormat>, Pair<Int, Int>>>()
+        val reader: (ByteArray, Int, Int, Int, ReadOptions) -> List<net.plumt.qr.ScanResult> = { _, w, h, _, o ->
+            calls += o.formats to (w to h)
+            // 두 번 모두 같은 코드를 돌려줘도 하나만 남는다
+            listOf(net.plumt.qr.ScanResult("12345670", CodeFormat.EAN_8, QrPayload.Product("12345670"), listOf(ScanPoint(1f, 1f), ScanPoint(5f, 1f))))
+        }
+        // QR 만이면 한 번만 읽는다
+        ZxingEngine(ReadOptions(formats = CodeFormat.QR_ONLY), reader).detect(ScanFrame(ByteArray(8 * 6), 8, 6))
+        assertEquals(listOf(CodeFormat.QR_ONLY to (8 to 6)), calls)
+        calls.clear()
+        val out = ZxingEngine(ReadOptions(formats = setOf(CodeFormat.QR_CODE, CodeFormat.EAN_8)), reader)
+            .detect(ScanFrame(ByteArray(10 * 6), 8, 6, rowStride = 10))
+        // 두 번째는 돌린 버퍼(6x8, 행 간격 없음)에서 1차원 형식만
+        assertEquals(listOf(setOf(CodeFormat.QR_CODE, CodeFormat.EAN_8) to (8 to 6), setOf(CodeFormat.EAN_8) to (6 to 8)), calls)
+        assertEquals(1, out.size)
+    }
+
+    @Test
+    fun rotateClockwise_mapsPixelsAndPointsBack() {
+        // 3x2 버퍼(행 간격 4) → 시계 방향 90도 → 2x3
+        val buf = byteArrayOf(1, 2, 3, 0, 4, 5, 6, 0)
+        val rotated = ZxingEngine.rotateClockwise(buf, 3, 2, 4)
+        assertArrayEquals(byteArrayOf(4, 1, 5, 2, 6, 3), rotated)
+        // 돌린 버퍼의 (rx, ry) 는 원래 (ry, H - 1 - rx)
+        assertEquals(ScanPoint(2f, 1f), ZxingEngine.unrotatePoint(ScanPoint(0f, 2f), 2))
+        assertEquals(ScanPoint(0f, 0f), ZxingEngine.unrotatePoint(ScanPoint(1f, 0f), 2))
+    }
+
     @Test
     fun engineFailure_isWrappedWithCause() {
         val cause = QrCodeException("내부")

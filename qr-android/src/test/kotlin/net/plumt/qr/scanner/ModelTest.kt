@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import net.plumt.qr.scanner.action.QrAction
 import org.junit.Test
 import java.time.ZoneId
 
@@ -202,6 +203,36 @@ class ScannerDefaultsTest {
         assertEquals(13, actionIds.size)
         val warn = net.plumt.qr.scanner.action.UrlWarning.entries.map { ScannerDefaults.warningRes(it) }
         assertEquals(net.plumt.qr.scanner.action.UrlWarning.entries.size, warn.toSet().size)
+    }
+
+    @Test
+    fun actionDetail_showsTargetsButNeverSecrets() {
+        val wifi = QrPayload.Wifi("집", "secretpw")
+        val otp = QrPayload.Otp("alice", "JBSWY3DPEHPK3PXP", issuer = "Ex")
+        assertEquals("010-1234", ScannerDefaults.actionDetail(QrAction.Dial("010-1234")))
+        assertEquals("010-1\n안녕", ScannerDefaults.actionDetail(QrAction.SendSms("010-1", " 안녕 ")))
+        assertEquals("010-1", ScannerDefaults.actionDetail(QrAction.SendSms("010-1", "")))
+        val address = "a" + "@" + "b.example"
+        assertEquals("$address\n제목\n본문", ScannerDefaults.actionDetail(QrAction.SendEmail(address, "제목", "본문")))
+        assertEquals("집", ScannerDefaults.actionDetail(QrAction.ConnectWifi(wifi)))
+        assertEquals("집", ScannerDefaults.actionDetail(QrAction.CopyWifiPassword(wifi)))
+        listOf(QrAction.AddOtp(otp), QrAction.CopyOtpSecret(otp)).forEach {
+            val d = ScannerDefaults.actionDetail(it)
+            assertTrue(d, d.contains("alice"))
+            assertFalse(d, d.contains("JBSWY3DPEHPK3PXP"))
+        }
+        assertEquals("4006381333931", ScannerDefaults.actionDetail(QrAction.SearchProduct("4006381333931")))
+        assertEquals("글", ScannerDefaults.actionDetail(QrAction.CopyText("글")))
+        assertEquals("민감한 글은 보이지 않는다", "", ScannerDefaults.actionDetail(QrAction.CopyText("비밀", sensitive = true)))
+        assertEquals("홍길동", ScannerDefaults.actionDetail(QrAction.AddContact(QrPayload.Contact(name = "홍길동"))))
+        assertTrue(ScannerDefaults.actionDetail(QrAction.AddEvent(QrPayload.Event("회의")), zone).startsWith("회의"))
+        assertTrue(ScannerDefaults.actionDetail(QrAction.ShowLocation(QrPayload.Geo(1.0, 2.0))).isNotEmpty())
+        // 링크는 사용자 정보를 가린다
+        assertEquals("https://****@bank.example/", ScannerDefaults.actionDetail(net.plumt.qr.scanner.action.QrActions.openUrl("https://u:pw" + "@" + "bank.example/")))
+        // 긴 본문은 자른다
+        val long = ScannerDefaults.actionDetail(QrAction.CopyText("가".repeat(500)))
+        assertEquals(200, long.codePointCount(0, long.length))
+        assertTrue(long.endsWith("…"))
     }
 
     @Test

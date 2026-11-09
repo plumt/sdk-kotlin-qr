@@ -23,6 +23,14 @@ public final class net/plumt/qr/scanner/AutoDeliverOptions {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/plumt/qr/scanner/BitmapCodeReader {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/BitmapCodeReader;
+	public static final field RECOMMENDED_MAX_DIMENSION I
+	public static final fun read (Landroid/content/Context;Landroid/graphics/Bitmap;Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun read$default (Landroid/content/Context;Landroid/graphics/Bitmap;Ljava/util/Set;Lnet/plumt/qr/scanner/ScanEngine$Factory;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class net/plumt/qr/scanner/CameraLens : java/lang/Enum {
 	public static final field BACK Lnet/plumt/qr/scanner/CameraLens;
 	public static final field FRONT Lnet/plumt/qr/scanner/CameraLens;
@@ -121,6 +129,10 @@ public final class net/plumt/qr/scanner/Detection {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class net/plumt/qr/scanner/FrameListener {
+	public abstract fun onFrame (Lnet/plumt/qr/scanner/ScanFrame;Ljava/util/List;)V
+}
+
 public final class net/plumt/qr/scanner/LockOptions {
 	public static final field $stable I
 	public fun <init> ()V
@@ -143,6 +155,20 @@ public final class net/plumt/qr/scanner/PreviewScaleMode : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/scanner/PreviewScaleMode;
 	public static fun values ()[Lnet/plumt/qr/scanner/PreviewScaleMode;
+}
+
+public final class net/plumt/qr/scanner/QrBitmaps {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/QrBitmaps;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;I)Landroid/graphics/Bitmap;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;II)Landroid/graphics/Bitmap;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;IILnet/plumt/qr/CodeColors;)Landroid/graphics/Bitmap;
+	public static final fun render (Lnet/plumt/qr/LogoQrCode;ILandroid/graphics/Bitmap;)Landroid/graphics/Bitmap;
+	public static final fun render (Lnet/plumt/qr/LogoQrCode;ILandroid/graphics/Bitmap;Lnet/plumt/qr/CodeColors;)Landroid/graphics/Bitmap;
+	public static synthetic fun render$default (Lnet/plumt/qr/CodeMatrix;IILnet/plumt/qr/CodeColors;ILjava/lang/Object;)Landroid/graphics/Bitmap;
+	public static synthetic fun render$default (Lnet/plumt/qr/LogoQrCode;ILandroid/graphics/Bitmap;Lnet/plumt/qr/CodeColors;ILjava/lang/Object;)Landroid/graphics/Bitmap;
+	public static final fun toArgbImage (Landroid/graphics/Bitmap;)Lnet/plumt/qr/ArgbImage;
+	public static final fun toBitmap (Lnet/plumt/qr/ArgbImage;)Landroid/graphics/Bitmap;
 }
 
 public abstract interface class net/plumt/qr/scanner/ScanEngine : java/lang/AutoCloseable {
@@ -204,7 +230,7 @@ public final class net/plumt/qr/scanner/ScanMode$Single : net/plumt/qr/scanner/S
 }
 
 public final class net/plumt/qr/scanner/ScannerComposablesKt {
-	public static final fun CodeScanner (Lnet/plumt/qr/scanner/ScanMode;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/ScannerOptions;Lnet/plumt/qr/scanner/ScannerState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CodeScanner (Lnet/plumt/qr/scanner/ScanMode;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/ScannerOptions;Lnet/plumt/qr/scanner/ScannerState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lnet/plumt/qr/scanner/FrameListener;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
 	public static final fun QrCodeChip (Lnet/plumt/qr/scanner/TrackedCode;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/time/ZoneId;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -212,6 +238,9 @@ public final class net/plumt/qr/scanner/ScannerDefaults {
 	public static final field $stable I
 	public static final field INSTANCE Lnet/plumt/qr/scanner/ScannerDefaults;
 	public static final field SUMMARY_MAX_LENGTH I
+	public static final fun actionDetail (Lnet/plumt/qr/scanner/action/QrAction;)Ljava/lang/String;
+	public static final fun actionDetail (Lnet/plumt/qr/scanner/action/QrAction;Ljava/time/ZoneId;)Ljava/lang/String;
+	public static synthetic fun actionDetail$default (Lnet/plumt/qr/scanner/action/QrAction;Ljava/time/ZoneId;ILjava/lang/Object;)Ljava/lang/String;
 	public static final fun actionLabelRes (Lnet/plumt/qr/scanner/action/QrAction;)I
 	public static final fun summary (Lnet/plumt/qr/ScanResult;)Ljava/lang/String;
 	public static final fun summary (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;)Ljava/lang/String;
@@ -278,6 +307,8 @@ public final class net/plumt/qr/scanner/ScannerState {
 	public final fun getZoom ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun isPaused ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun refreshPermission ()Z
+	public final fun retry ()Z
+	public final fun setFrameListener (Lnet/plumt/qr/scanner/FrameListener;)V
 	public final fun setPaused (Z)V
 	public final fun setTorchEnabled (Z)Z
 	public final fun setZoomRatio (F)Z
@@ -344,6 +375,28 @@ public final class net/plumt/qr/scanner/ZoomState {
 	public final fun getRatio ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/AppLinkPolicy {
+	public static final field $stable I
+	public static final field Companion Lnet/plumt/qr/scanner/action/AppLinkPolicy$Companion;
+	public static final field FORBIDDEN_SCHEMES Ljava/util/Set;
+	public static final field NONE Lnet/plumt/qr/scanner/action/AppLinkPolicy;
+	public synthetic fun <init> (Ljava/util/Set;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final fun allow (Ljava/util/Set;)Lnet/plumt/qr/scanner/action/AppLinkPolicy;
+	public static final fun allow (Ljava/util/Set;Z)Lnet/plumt/qr/scanner/action/AppLinkPolicy;
+	public final fun allows (Ljava/lang/String;)Z
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAllowIntentUri ()Z
+	public final fun getSchemes ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/action/AppLinkPolicy$Companion {
+	public final fun allow (Ljava/util/Set;)Lnet/plumt/qr/scanner/action/AppLinkPolicy;
+	public final fun allow (Ljava/util/Set;Z)Lnet/plumt/qr/scanner/action/AppLinkPolicy;
+	public static synthetic fun allow$default (Lnet/plumt/qr/scanner/action/AppLinkPolicy$Companion;Ljava/util/Set;ZILjava/lang/Object;)Lnet/plumt/qr/scanner/action/AppLinkPolicy;
 }
 
 public abstract interface class net/plumt/qr/scanner/action/QrAction {
@@ -450,13 +503,10 @@ public final class net/plumt/qr/scanner/action/QrAction$Dial : net/plumt/qr/scan
 
 public final class net/plumt/qr/scanner/action/QrAction$OpenUrl : net/plumt/qr/scanner/action/QrAction {
 	public static final field $stable I
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/util/Set;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
-	public static synthetic fun copy$default (Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/Set;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDisplayHost ()Ljava/lang/String;
 	public final fun getHost ()Ljava/lang/String;
@@ -521,19 +571,22 @@ public final class net/plumt/qr/scanner/action/QrAction$ShowLocation : net/plumt
 }
 
 public final class net/plumt/qr/scanner/action/QrActionConfirmationKt {
-	public static final fun QrActionConfirmation (Lnet/plumt/qr/scanner/action/QrAction;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;I)V
+	public static final fun QrActionConfirmation (Lnet/plumt/qr/scanner/action/QrAction;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/time/ZoneId;Landroidx/compose/runtime/Composer;II)V
+	public static final fun QrActionConfirmation (Lnet/plumt/qr/scanner/action/QrAction;Lnet/plumt/qr/scanner/action/AppLinkPolicy;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/time/ZoneId;Landroidx/compose/runtime/Composer;II)V
 }
 
 public abstract interface class net/plumt/qr/scanner/action/QrActionExecutor {
 	public static final field Companion Lnet/plumt/qr/scanner/action/QrActionExecutor$Companion;
 	public static fun default ()Lnet/plumt/qr/scanner/action/QrActionExecutor;
 	public static fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public static fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;Lnet/plumt/qr/scanner/action/AppLinkPolicy;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
 	public abstract fun execute (Landroid/content/Context;Lnet/plumt/qr/scanner/action/QrAction;)Lnet/plumt/qr/scanner/action/QrActionResult;
 }
 
 public final class net/plumt/qr/scanner/action/QrActionExecutor$Companion {
 	public final fun default ()Lnet/plumt/qr/scanner/action/QrActionExecutor;
 	public final fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
+	public final fun default (Lnet/plumt/qr/scanner/action/QrActionOptions;Lnet/plumt/qr/scanner/action/AppLinkPolicy;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
 	public static synthetic fun default$default (Lnet/plumt/qr/scanner/action/QrActionExecutor$Companion;Lnet/plumt/qr/scanner/action/QrActionOptions;ILjava/lang/Object;)Lnet/plumt/qr/scanner/action/QrActionExecutor;
 }
 
@@ -610,13 +663,17 @@ public final class net/plumt/qr/scanner/action/QrActions {
 	public static final field $stable I
 	public static final field INSTANCE Lnet/plumt/qr/scanner/action/QrActions;
 	public static final fun all (Lnet/plumt/qr/ScanResult;)Ljava/util/List;
+	public static final fun all (Lnet/plumt/qr/ScanResult;Lnet/plumt/qr/scanner/action/AppLinkPolicy;)Ljava/util/List;
 	public static final fun openUrl (Ljava/lang/String;)Lnet/plumt/qr/scanner/action/QrAction$OpenUrl;
 	public static final fun primary (Lnet/plumt/qr/QrPayload;)Lnet/plumt/qr/scanner/action/QrAction;
+	public static final fun primary (Lnet/plumt/qr/QrPayload;Lnet/plumt/qr/scanner/action/AppLinkPolicy;)Lnet/plumt/qr/scanner/action/QrAction;
+	public static final fun requiresConfirmation (Lnet/plumt/qr/scanner/action/QrAction;)Z
 }
 
 public final class net/plumt/qr/scanner/action/UrlWarning : java/lang/Enum {
 	public static final field INTERNATIONALIZED Lnet/plumt/qr/scanner/action/UrlWarning;
 	public static final field IP_ADDRESS Lnet/plumt/qr/scanner/action/UrlWarning;
+	public static final field NON_WEB_SCHEME Lnet/plumt/qr/scanner/action/UrlWarning;
 	public static final field NOT_HTTPS Lnet/plumt/qr/scanner/action/UrlWarning;
 	public static final field UNREADABLE_HOST Lnet/plumt/qr/scanner/action/UrlWarning;
 	public static final field USER_INFO Lnet/plumt/qr/scanner/action/UrlWarning;

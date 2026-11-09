@@ -12,7 +12,7 @@ import net.plumt.qr.internal.Encoders
  * @property width 원하는 너비(칸). 0 이면 자연 크기
  * @property height 원하는 높이(칸). 0 이면 자연 크기
  * @property margin 여백의 모듈 수. null 이면 형식별 기본값 — QR 4, 1차원 10(좌우만), PDF417 2, Data Matrix·Aztec 1
- * @throws IllegalArgumentException 값이 음수일 때 (생성 시)
+ * @throws IllegalArgumentException 값이 음수이거나 `width * height` 가 [CodeMatrix.MAX_CELLS] 를 넘을 때 (생성 시)
  */
 public data class BarcodeOptions(
     val width: Int = 0,
@@ -22,11 +22,9 @@ public data class BarcodeOptions(
     init {
         require(width >= 0 && height >= 0) { "width($width)·height($height) 는 0 이상이어야 한다" }
         require(margin == null || margin >= 0) { "margin($margin) 은 0 이상이어야 한다" }
-        require(width.toLong() * height <= MAX_CELLS) { "width*height(${width.toLong() * height}) 가 너무 크다" }
-    }
-
-    private companion object {
-        const val MAX_CELLS = 100_000_000L
+        require(width.toLong() * height <= CodeMatrix.MAX_CELLS) {
+            "width*height(${width.toLong() * height}) 가 너무 크다 — 최대 ${CodeMatrix.MAX_CELLS} 칸"
+        }
     }
 }
 

@@ -5,6 +5,7 @@ import net.plumt.qr.BarcodeNumber
 import net.plumt.qr.BarcodeNumberType
 import net.plumt.qr.CodeFormat
 import net.plumt.qr.QrCodeException
+import net.plumt.qr.QrContentTooLongException
 
 /** 진입점 인자 검사. 실패하면 받은 값과 허용 범위를 담은 [IllegalArgumentException] 을 던진다. */
 internal object Preconditions {
@@ -93,16 +94,20 @@ internal inline fun <T> engine(what: String, block: () -> T): T =
         block()
     } catch (e: QrCodeException) {
         throw e
+    } catch (e: QrContentTooLongException) {
+        throw e
     } catch (e: IllegalArgumentException) {
         throw IllegalArgumentException("$what 에 실패했다 — 내용을 확인한다: ${e.message}", e)
     } catch (e: WriterException) {
         val message = e.message.orEmpty()
-        if (message.contains("too big", ignoreCase = true) || message.contains("too large", ignoreCase = true) ||
-            message.contains("too many", ignoreCase = true) || message.contains("unable to fit", ignoreCase = true)
-        ) {
-            throw IllegalArgumentException("$what 에 실패했다 — 내용이 최대 용량을 넘는다: $message", e)
-        }
+        if (isCapacityError(e)) throw IllegalArgumentException("$what 에 실패했다 — 내용이 최대 용량을 넘는다: $message", e)
         throw QrCodeException("$what 에 실패했다: $message", e)
     } catch (@Suppress("TooGenericExceptionCaught") e: RuntimeException) {
         throw QrCodeException("$what 에 실패했다: ${e.message}", e)
     }
+
+/** 엔진이 "내용이 너무 크다" 로 던진 오류인가. ZXing 은 형식마다 문구가 다르다. */
+internal fun isCapacityError(e: WriterException): Boolean {
+    val message = e.message.orEmpty()
+    return listOf("too big", "too large", "too many", "unable to fit").any { message.contains(it, ignoreCase = true) }
+}

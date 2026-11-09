@@ -210,6 +210,25 @@ class RealWorldPayloadTest {
         assertEquals(QrPayload.Sms("010", "뭐해? 지금"), QrPayload.parse(QrPayload.Sms("010", "뭐해? 지금").encode()))
     }
 
+    @Test
+    fun `본문의 물음표 바로 뒤에 글자가 이어져도 질의로 읽지 않는다`() {
+        listOf("뭐해?응", "a?body=b", "?x", "끝?").forEach { body ->
+            assertEquals(body, QrPayload.Sms("010", body), QrPayload.parse(QrPayload.Sms("010", body).encode()))
+        }
+        assertEquals(QrPayload.Sms("010", "뭐해?응"), QrPayload.parse("smsto:010:뭐해?응"))
+    }
+
+    // ---- 역슬래시 이스케이프 ----
+
+    @Test
+    fun `역슬래시 뒤 n 이 든 값은 줄바꿈으로 바뀌지 않고 왕복한다`() {
+        val contact = QrPayload.Contact(name = "C:\\new", note = "a\\nb\n둘째 줄", address = "D:\\notes")
+        assertEquals(contact, QrPayload.parse(contact.encode()))
+        assertEquals(contact, QrPayload.parse(contact.encodeMeCard()))
+        val event = QrPayload.Event("t\\n", location = "D:\\notes", description = "\\\\n\n끝")
+        assertEquals(event, QrPayload.parse(event.encode()))
+    }
+
     // ---- OTP ----
 
     @Test
@@ -231,7 +250,7 @@ class RealWorldPayloadTest {
     }
 
     @Test
-    fun `OTP 라벨 구분자 %3A 와 공백, issuer 매개변수 우선`() {
+    fun `OTP 라벨 구분자 퍼센트 인코딩 콜론과 공백, issuer 매개변수 우선`() {
         val otp = QrPayload.parse("otpauth://totp/Big%20Corp%3A%20alice?secret=JBSWY3DPEHPK3PXP") as QrPayload.Otp
         assertEquals("Big Corp", otp.issuer)
         assertEquals("alice", otp.account)

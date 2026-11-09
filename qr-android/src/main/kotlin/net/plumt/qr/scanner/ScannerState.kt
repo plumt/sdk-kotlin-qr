@@ -28,10 +28,17 @@ private const val DELIVERY_BUFFER = 8
 public class ScannerState internal constructor(
     /** 고르는 방식. */
     public val mode: ScanMode,
-    /** 설정. */
-    public val options: ScannerOptions,
+    options: ScannerOptions,
     private val permissionGranted: () -> Boolean,
 ) {
+    /**
+     * 설정. [rememberScannerState] 가 엔진 팩토리만 다른 설정을 받으면 상태를 새로 만들지 않고 이 값만 바꾼다 —
+     * 새 엔진은 다음 카메라 세션부터 쓴다.
+     */
+    @Volatile
+    public var options: ScannerOptions = options
+        private set
+
     private val _codes = MutableStateFlow<List<TrackedCode>>(emptyList())
     private val _locked = MutableStateFlow<TrackedCode?>(null)
     private val _status = MutableStateFlow(if (permissionGranted()) CameraStatus.Starting else CameraStatus.PermissionRequired)
@@ -81,8 +88,13 @@ public class ScannerState internal constructor(
     private var camera: CameraHandle? = null
     private var analyzer: FrameAnalyzer? = null
 
+    // 카메라 세션 번호. 바뀌면 미리보기가 카메라를 다시 묶는다(retry)
+    private val _session = MutableStateFlow(0)
+    internal val session: StateFlow<Int> = _session.asStateFlow()
+
     /**
-     * 권한을 다시 읽는다. 앱이 권한 요청 결과를 받은 뒤 부른다([CodeScanner]·[CodeScannerPreview] 는 화면이 다시 보일 때 스스로 부른다).
+     * 권한을 다시 읽는다. [rememberScannerState] 로 만든 상태는 화면이 다시 보일 때(ON_RESUME — 시스템 권한 창이 닫힐 때 포함)
+     * 스스로 부르므로, 앱은 권한 요청 결과 콜백 등에서 바로 반영하고 싶을 때만 부른다.
      * @return 권한이 있는가
      */
     public fun refreshPermission(): Boolean {
@@ -140,7 +152,28 @@ public class ScannerState internal constructor(
         return true
     }
 
-    /** 인식을 멈추거나 다시 시작한다. 다시 시작하면 추적·고정·자동 넘기기 기록을 처음부터 쌓는다. */
+    /**
+     * 카메라 열기를 다시 시도한다. [CameraStatus.Error]·[CameraStatus.NoCamera] 일 때만 동작한다 — 다른 앱이 카메라를 잡고 있다
+     * 놓은 경우처럼 일시적인 실패에서 화면을 다시 들어오지 않고 복구할 때 쓴다. 메인 스레드에서 부른다.
+     * @return 다시 열기를 시작했으면 true. 권한이 없으면 [CameraStatus.PermissionRequired] 로 바꾸고 false
+     */
+    public fun retry(): Boolean {
+        val now = _status.value
+        if (now !is CameraStatus.Error && now != CameraStatus.NoCamera) return false
+        if (!permissionGranted()) {
+            _status.value = CameraStatus.PermissionRequired
+            return false
+        }
+        _status.value = CameraStatus.Starting
+        _session.value = _session.value + 1
+        return true
+    }
+
+    /**
+     * 인식을 멈추거나 다시 시작한다. 다시 시작하면 추적·고정은 처음부터 쌓는다. 자동 넘기기의 같은 원문 반복 창
+     * ([AutoDeliverOptions.repeatWindowMillis])은 이어진다 — 넘기기 → 멈춤 → 결과 창 닫기 → 재개 흐름에서 화면에 남은 같은 코드를
+     * 곧바로 다시 넘기지 않게.
+     */
     public fun setPaused(paused: Boolean) {
         if (_paused.value == paused) return
         _paused.value = paused
@@ -150,6 +183,17 @@ public class ScannerState internal constructor(
         } else {
             resetOnAnalysisThread = true
         }
+    }
+
+    @Volatile
+    private var frameListener: FrameListener? = null
+
+    /**
+     * 분석한 프레임을 받을 수신자를 건다. null 이면 뗀다. 돌고 있는 세션에도 다음 프레임부터 적용된다.
+     * `CodeScanner` 의 `onFrame` 을 쓰면 화면 수명에 맞춰 자동으로 걸고 뗀다.
+     */
+    public fun setFrameListener(listener: FrameListener?) {
+        frameListener = listener
     }
 
     /** [error] 를 비운다. */
@@ -169,6 +213,12 @@ public class ScannerState internal constructor(
     @Volatile
     private var resetOnAnalysisThread = false
 
+    /** 엔진 팩토리만 바뀐 설정으로 바꾼다(다음 세션부터 쓴다). 그 밖의 값이 다르면 [IllegalArgumentException]. */
+    internal fun updateEngine(newOptions: ScannerOptions) {
+        require(newOptions.copy(engine = options.engine) == options) { "엔진 밖의 설정이 바뀌면 상태를 새로 만든다" }
+        options = newOptions
+    }
+
     internal fun onViewSize(width: Float, height: Float) {
         viewWidth = width
         viewHeight = height
@@ -185,6 +235,7 @@ public class ScannerState internal constructor(
             consumeReset = ::consumeResetFlag,
             sink = ::onSnapshot,
             onError = ::onError,
+            frameListener = { frameListener },
         ).also { analyzer = it }
     }
 

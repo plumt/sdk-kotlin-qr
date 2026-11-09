@@ -17,6 +17,8 @@ import net.plumt.qr.scanner.ScannerException
 import net.plumt.qr.scanner.ScanEngine
 import net.plumt.qr.scanner.ScanFrame
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * ML Kit [Barcode] → [Detection]. ML Kit 형식 상수를 아는 곳은 여기 하나다.
@@ -73,7 +75,7 @@ internal object MlKitMapper {
 }
 
 /**
- * ML Kit 엔진. 분석 스레드에서 인식 작업을 끝날 때까지 기다린다(블로킹). CameraX 프레임이면 복사 없이 미디어 이미지를 넘기고,
+ * ML Kit 엔진. 분석 스레드에서 인식 작업을 끝날 때까지 기다린다(블로킹, 프레임당 상한 2초 — 넘으면 [ScannerException]). CameraX 프레임이면 복사 없이 미디어 이미지를 넘기고,
  * 직접 만든 프레임이면 밝기 평면으로 NV21 을 만들어 넘긴다(바코드 인식은 밝기만 쓴다).
  */
 internal class MlKitEngine private constructor(
@@ -95,7 +97,10 @@ internal class MlKitEngine private constructor(
                 frame.width, frame.height, frame.rotationDegrees, InputImage.IMAGE_FORMAT_NV21)
         }
         val barcodes = try {
-            Tasks.await(scanner.process(input))
+            // 상한을 둔다 — 인식기가 멈추면 분석 스레드가 영구히 묶이고 오류도 알리지 못한다
+            Tasks.await(scanner.process(input), PROCESS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (e: TimeoutException) {
+            throw ScannerException("ML Kit 이 ${PROCESS_TIMEOUT_SECONDS}초 안에 프레임을 처리하지 못했다", e)
         } catch (e: ExecutionException) {
             throw ScannerException("ML Kit 이 프레임을 처리하지 못했다", e.cause ?: e)
         } catch (e: InterruptedException) {
@@ -109,6 +114,10 @@ internal class MlKitEngine private constructor(
         if (closed) return
         closed = true
         scanner.close()
+    }
+
+    private companion object {
+        const val PROCESS_TIMEOUT_SECONDS = 2L
     }
 
     object Factory : ScanEngine.Factory {

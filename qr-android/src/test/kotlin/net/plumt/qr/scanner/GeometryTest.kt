@@ -291,3 +291,127 @@ class GeometryTest {
         assertEquals(5f, BoxMath.centerDistance(box(0f, 0f, 2f, 2f), box(3f, 4f, 5f, 6f)), EPS)
     }
 }
+
+/**
+ * 센서 버퍼 → 세운 이미지 → 미리보기 뷰 좌표 사슬을 독립 모형과 맞춘다(검토 M1).
+ *
+ * 모형: 장면의 한 점을 세운 이미지 좌표로 정하고, 센서 버퍼 좌표는 그 역회전으로 만든다. 뷰 좌표는 `PreviewView` 의
+ * FILL_CENTER·FIT_CENTER 정의(비율 유지 배율 + 가운데 정렬)대로 계산하고, 전면 카메라는 **뷰 공간에서** 좌우를 뒤집는다
+ * (`PreviewTransform` 은 이미지 공간에서 뒤집으므로 계산 경로가 다르다).
+ *
+ * 전제(실기기에서 확인할 것): 미리보기와 분석 스트림이 같은 비율·같은 화각이다. 기기가 둘 중 하나를 다른 비율로 잡거나 센서 크롭이
+ * 다르면 이 사슬이 맞아도 박스가 어긋난다.
+ */
+class CoordinateChainTest {
+
+    /** 세운 (ux, uy) 가 센서 버퍼의 어디에 찍히는가 — rotatePoint 의 역. */
+    private fun toBuffer(ux: Float, uy: Float, bw: Int, bh: Int, r: Int): ScanPoint = when (r) {
+        0 -> ScanPoint(ux, uy)
+        90 -> ScanPoint(uy, bh - ux)
+        180 -> ScanPoint(bw - ux, bh - uy)
+        270 -> ScanPoint(bw - uy, ux)
+        else -> error("r")
+    }
+
+    private fun expectedView(ux: Float, uy: Float, iw: Int, ih: Int, vw: Float, vh: Float, mode: PreviewScaleMode, front: Boolean): ScanPoint {
+        val s = if (mode == PreviewScaleMode.FILL) maxOf(vw / iw, vh / ih) else minOf(vw / iw, vh / ih)
+        val x = ux * s + (vw - iw * s) / 2f
+        val y = uy * s + (vh - ih * s) / 2f
+        return ScanPoint(if (front) vw - x else x, y)
+    }
+
+    @Test
+    fun chain_matchesIndependentModel_allRotationsModesLenses() {
+        val rnd = Random(20261103)
+        val views = listOf(1080f to 2340f, 2340f to 1080f, 1000f to 1000f, 720f to 960f, 333f to 777f)
+        for (r in listOf(0, 90, 180, 270)) for (mode in PreviewScaleMode.entries) for (front in listOf(false, true)) for ((vw, vh) in views) {
+            val (bw, bh) = 640 to 480
+            val iw = if (r % 180 == 0) bw else bh
+            val ih = if (r % 180 == 0) bh else bw
+            val t = PreviewTransform(iw, ih, vw, vh, mode, front)
+            repeat(50) {
+                val ux = rnd.nextFloat() * iw
+                val uy = rnd.nextFloat() * ih
+                val b = toBuffer(ux, uy, bw, bh, r)
+                val upright = FrameRotation.rotatePoint(b.x, b.y, bw, bh, r)
+                assertEquals("r=$r 회전 왕복 x", ux, upright.x, 1e-2f)
+                assertEquals("r=$r 회전 왕복 y", uy, upright.y, 1e-2f)
+                val v = t.mapPoint(upright)
+                val e = expectedView(ux, uy, iw, ih, vw, vh, mode, front)
+                val tol = 1e-2f * maxOf(vw, vh) / 100f
+                assertEquals("r=$r $mode front=$front ${vw}x$vh x", e.x, v.x, tol)
+                assertEquals("r=$r $mode front=$front ${vw}x$vh y", e.y, v.y, tol)
+            }
+        }
+    }
+
+    @Test
+    fun bufferCorners_landOnTheRightUprightCorners() {
+        // CameraX rotationDegrees 는 버퍼를 바로 세우려고 시계 방향으로 돌릴 각도 — 90 이면 버퍼 왼쪽 위가 세운 이미지의 오른쪽 위
+        val w = 640
+        val h = 480
+        fun up(x: Float, y: Float, r: Int) = FrameRotation.rotatePoint(x, y, w, h, r)
+        assertEquals(ScanPoint(480f, 0f), up(0f, 0f, 90))
+        assertEquals(ScanPoint(480f, 640f), up(640f, 0f, 90))
+        assertEquals(ScanPoint(0f, 0f), up(0f, 480f, 90))
+        assertEquals(ScanPoint(640f, 480f), up(0f, 0f, 180))
+        assertEquals(ScanPoint(0f, 640f), up(0f, 0f, 270))
+        assertEquals(ScanPoint(0f, 0f), up(640f, 0f, 270))
+    }
+
+    @Test
+    fun fillCenter_cropWindow_mapsToViewEdges() {
+        // 세운 480x640(3:4) 을 1080x2340(9:19.5) 뷰에 FILL — 높이에 맞춰(배율 3.65625) 좌우가 잘린다
+        val t = PreviewTransform(480, 640, 1080f, 2340f, PreviewScaleMode.FILL, false)
+        val s = 2340f / 640f
+        assertEquals(s, t.scale, 1e-5f)
+        val visibleW = 1080f / s
+        val cropLeft = (480f - visibleW) / 2f
+        assertEquals(0f, t.mapX(cropLeft), 1e-2f)
+        assertEquals(1080f, t.mapX(cropLeft + visibleW), 1e-2f)
+        assertEquals(0f, t.mapY(0f), 1e-3f)
+        assertEquals(2340f, t.mapY(640f), 1e-2f)
+        // 잘린 띠 안의 코드는 보이지 않는다고 판정한다
+        assertFalse(t.isVisible(t.mapBounds(CodeBounds(0f, 300f, cropLeft - 1f, 340f))))
+        assertTrue(t.isVisible(t.mapBounds(CodeBounds(cropLeft + 1f, 300f, cropLeft + 20f, 340f))))
+        // 전면: 같은 잘린 창이 좌우로 뒤집힌다 — 이미지 왼쪽 끝 창이 뷰 오른쪽 끝
+        val f = PreviewTransform(480, 640, 1080f, 2340f, PreviewScaleMode.FILL, true)
+        assertEquals(1080f, f.mapX(cropLeft), 1e-2f)
+        assertEquals(0f, f.mapX(cropLeft + visibleW), 1e-2f)
+        // 역변환도 같은 창
+        assertEquals(cropLeft, t.unmapX(0f), 1e-3f)
+        assertEquals(cropLeft, f.unmapX(1080f), 1e-3f)
+    }
+
+    @Test
+    fun fitCenter_letterbox_mapsImageEdgesInsideView() {
+        val t = PreviewTransform(480, 640, 1080f, 2340f, PreviewScaleMode.FIT, false)
+        val s = 1080f / 480f
+        val band = (2340f - 640f * s) / 2f
+        assertEquals(0f, t.mapX(0f), 1e-3f)
+        assertEquals(1080f, t.mapX(480f), 1e-2f)
+        assertEquals(band, t.mapY(0f), 1e-2f)
+        assertEquals(2340f - band, t.mapY(640f), 1e-2f)
+        val area = t.visibleImageArea()
+        assertEquals(band, area.top, 1e-2f)
+        assertEquals(2340f - band, area.bottom, 1e-2f)
+    }
+
+    @Test
+    fun frontLens_boxStaysOverMirroredCode_forEveryRotation() {
+        // 전면 카메라: 세운 이미지 왼쪽 위 사분면의 코드는 (거울처럼 보이는) 미리보기에서 오른쪽 위에 보인다
+        for (r in listOf(0, 90, 180, 270)) {
+            val (bw, bh) = 640 to 480
+            val iw = if (r % 180 == 0) bw else bh
+            val ih = if (r % 180 == 0) bh else bw
+            val code = CodeBounds(iw * 0.1f, ih * 0.1f, iw * 0.3f, ih * 0.3f)
+            val buf = FrameRotation.enclose(listOf(toBuffer(code.left, code.top, bw, bh, r), toBuffer(code.right, code.bottom, bw, bh, r)))!!
+            val upright = FrameRotation.rotateBounds(buf, bw, bh, r)
+            assertEquals("r=$r", code.centerX, upright.centerX, 1e-2f)
+            val v = PreviewTransform(iw, ih, 1000f, 1000f, PreviewScaleMode.FIT, true).mapBounds(upright)
+            assertTrue("r=$r 오른쪽 ${v}", v.centerX > 500f)
+            assertTrue("r=$r 위 ${v}", v.centerY < 500f)
+            assertTrue("r=$r 정규화", v.left <= v.right && v.top <= v.bottom)
+        }
+    }
+}

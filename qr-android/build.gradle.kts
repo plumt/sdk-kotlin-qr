@@ -18,6 +18,8 @@ android {
         // SDK 공통 하한은 23 이지만 26 으로 올린다 — 결과 타입(qr 의 QrPayload·EventTime)과 요약·일정 실행이 java.time 을 쓰고,
         // java.time 은 API 26 부터 기기에 있다. 26 미만을 받으려면 앱마다 core library desugaring 을 켜야 해 기본값으로 두지 않는다(README)
         minSdk = 26
+        // 실기기 계측(QrDeviceTest) 전용 — CI 는 connected* 를 돌리지 않는다
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -48,6 +50,9 @@ kotlin {
 }
 
 dependencies {
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.junit)
     // 결과 타입(ScanResult·QrPayload·CodeFormat)이 공개 API 에 나온다. 앱은 qr-android 하나만 추가한다
     api(project(":qr"))
     // StateFlow 가 공개 API 에 나온다
@@ -76,6 +81,9 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    // 컴포저블(권한 허용 뒤 미리보기 전환 등)을 Robolectric 에서 돌린다. 테스트 액티비티 선언은 debug 매니페스트에만 들어간다
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 mavenPublishing {

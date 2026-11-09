@@ -50,7 +50,8 @@ public sealed interface QrPayload {
             return if (SCHEME.containsMatchIn(trimmed)) trimmed else "https://$trimmed"
         }
 
-        override fun summary(zone: ZoneId): String = url.trim()
+        /** 주소의 사용자 정보(`사용자:비밀번호@`)는 `****@` 로 가린다 — 칩·확인창에 비밀번호가 보이지 않게. */
+        override fun summary(zone: ZoneId): String = Summaries.maskUserInfo(url.trim())
 
         // `https://사용자:비밀번호@호스트` 의 사용자 정보를 가린다
         override fun toString(): String = "Url(url=${Summaries.maskUserInfo(url)})"
@@ -312,12 +313,21 @@ public sealed interface QrPayload {
 
     public companion object {
         /**
-         * 읽은 문자열을 구조로 푼다. 던지지 않는다 — 모르는 형식·깨진 입력은 원문 그대로의 [Text] 다.
+         * [parse] 가 구조로 푸는 원문의 최대 길이(UTF-16 글자 수). 이보다 길면 원문 그대로의 [Text] 다.
+         *
+         * 가장 큰 QR(버전 40, 숫자 7,089자)도 담는 값이다. 카메라는 프레임마다 [parse] 를 부르므로, 비정상적으로 긴 입력이
+         * 분석 스레드를 오래 붙들지 않게 상한을 둔다.
+         */
+        public const val MAX_PARSE_LENGTH: Int = 8192
+
+        /**
+         * 읽은 문자열을 구조로 푼다. 던지지 않는다 — 모르는 형식·깨진 입력, [MAX_PARSE_LENGTH] 보다 긴 입력은 원문 그대로의 [Text] 다.
+         * 입력 길이에 선형 시간이다.
          *
          * 스킴이 있는 형식(`http(s)://`·`WIFI:`·`BEGIN:VCARD`·`MECARD:`·`BEGIN:VEVENT`·`BEGIN:VCALENDAR`·`mailto:`·
          * `MATMSG:`·`SMTP:`·`tel:`·`smsto:`·`sms:`·`mmsto:`·`geo:`·`otpauth://`)만 구조로 푼다. 접두사는 대소문자를 가리지 않고
          * 앞뒤 공백은 무시한다. 맨 이메일 주소·전화번호처럼 추정이 필요한 것은 [Text] 로 둔다 — 추정하면 사용자가 쓴 글이
-         * 다른 종류로 바뀐다.
+         * 다른 종류로 바뀐다. 추정이 필요하면 `parse(text, ParseOptions.INFER_ALL)` 을 쓴다.
          */
         @JvmStatic
         public fun parse(text: String): QrPayload = PayloadParser.parse(text)
@@ -331,6 +341,24 @@ public sealed interface QrPayload {
             if (format.kind == CodeFormat.Kind.PRODUCT && text.isNotBlank()) Product(text.trim()) else parse(text)
 
         /**
+         * [options] 에 따라 스킴 없는 맨 이메일 주소·전화번호도 추정해 푼다([ParseOptions]). 그 밖은 [parse] 와 같다. 던지지 않는다.
+         */
+        @JvmStatic
+        public fun parse(text: String, options: ParseOptions): QrPayload = PayloadParser.parse(text, options)
+
+        /**
+         * 기호 형식을 아는 [parse]. 상품 바코드면 [Product] 이고, 그 밖의 1차원 바코드([CodeFormat.Kind.LINEAR])는
+         * [ParseOptions.inferPhone] 을 적용하지 않는다 — 송장·재고 번호 같은 숫자열을 전화로 추정하면 누르는 순간 전화 앱이 뜬다
+         * (`tel:` 이 붙은 것은 언제나 전화다). 던지지 않는다.
+         */
+        @JvmStatic
+        public fun parse(text: String, format: CodeFormat, options: ParseOptions): QrPayload = when {
+            format.kind == CodeFormat.Kind.PRODUCT && text.isNotBlank() -> Product(text.trim())
+            format.kind == CodeFormat.Kind.LINEAR -> PayloadParser.parse(text, options.copy(inferPhone = false))
+            else -> PayloadParser.parse(text, options)
+        }
+
+        /**
          * 원문의 한 줄 요약. [parse] 한 값의 [summary] 이고, 그것이 비면(이름 없는 연락처 등) 원문 첫 줄로 돌아간다.
          * 비밀이 든 원문(`WIFI:`·`otpauth`)으로는 돌아가지 않는다. 던지지 않는다.
          */
@@ -338,6 +366,36 @@ public sealed interface QrPayload {
         @JvmOverloads
         public fun summarize(text: String, zone: ZoneId = ZoneId.systemDefault()): String =
             parse(text).summary(zone).ifBlank { Summaries.text(text) }
+    }
+}
+
+/**
+ * 해석 설정. 기본은 추정하지 않는다 — 스킴이 없는 글은 사용자가 쓴 그대로 [QrPayload.Text] 다.
+ *
+ * 추정을 켜면 스킴이 있는 형식으로 읽히지 않은 글 전체(앞뒤 공백 제외)가 아래 모양일 때만 바꾼다. 글 속에 섞인 주소·번호는 찾지 않는다.
+ *
+ * | 설정 | 받는 모양 | 결과 |
+ * |---|---|---|
+ * | [inferEmail] | `로컬@도메인` — 로컬은 `A-Z a-z 0-9 . _ % + -` 1..64자(점으로 시작·끝나거나 연달지 않음), 도메인은 점으로 나뉜 2개 이상의 라벨(`A-Z a-z 0-9 -`, 1..63자, `-` 로 시작·끝나지 않음)이고 마지막 라벨은 영문 2자 이상, 전체 254자 이하 | [QrPayload.Email] |
+ * | [inferPhone] | 맨 앞 `+` 하나(선택), 숫자와 공백·`-`·`(`·`)` 만, 숫자 7..15자리, 32자 이하. `2024-01-15` 처럼 연·월·일로 읽히는 것은 제외 | [QrPayload.Phone](적힌 그대로) |
+ *
+ * 둘 다 ASCII 만 받는다. 마침표로 나눈 번호(`01.23.45.67.89`)는 날짜·버전 번호와 구별되지 않아 전화로 보지 않는다.
+ *
+ * @property inferEmail 맨 이메일 주소를 [QrPayload.Email] 로 본다
+ * @property inferPhone 맨 전화번호를 [QrPayload.Phone] 으로 본다. 1차원 바코드에서 읽은 글에는 적용하지 않는다(`parse(text, format, options)`)
+ */
+public data class ParseOptions(
+    val inferEmail: Boolean = false,
+    val inferPhone: Boolean = false,
+) {
+    public companion object {
+        /** 추정하지 않는다([QrPayload.parse] 와 같다). */
+        @JvmField
+        public val DEFAULT: ParseOptions = ParseOptions()
+
+        /** 이메일·전화 모두 추정한다. */
+        @JvmField
+        public val INFER_ALL: ParseOptions = ParseOptions(inferEmail = true, inferPhone = true)
     }
 }
 

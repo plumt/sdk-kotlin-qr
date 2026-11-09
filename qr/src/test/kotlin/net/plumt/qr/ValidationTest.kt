@@ -138,7 +138,12 @@ class ValidationTest {
         iae("width(-1)·height(0) 는 0 이상이어야 한다") { BarcodeOptions(width = -1) }
         iae("width(0)·height(-5) 는 0 이상이어야 한다") { BarcodeOptions(height = -5) }
         iae("margin(-1) 은 0 이상이어야 한다") { BarcodeOptions(margin = -1) }
-        iae("width*height(400000000) 가 너무 크다") { BarcodeOptions(20_000, 20_000) }
+        iae("width*height(400000000) 가 너무 크다 — 최대 ${CodeMatrix.MAX_CELLS} 칸") { BarcodeOptions(20_000, 20_000) }
+        // Android 에서 ARGB 로 바꿔도 감당할 상한(4096x4096)
+        assertEquals(4096 * 4096, CodeMatrix.MAX_CELLS)
+        BarcodeOptions(4096, 4096)
+        iae("width*height(16781312) 가 너무 크다 — 최대 ${CodeMatrix.MAX_CELLS} 칸") { BarcodeOptions(4097, 4096) }
+        iaeContains("너무 크다") { Barcode.encode("12345670", CodeFormat.EAN_8, BarcodeOptions(4096, 4096, margin = 5000)) }
         iae("formats 가 비어 있다 — 아무것도 읽지 않는 설정은 호출부 실수다") { ReadOptions(formats = emptySet()) }
     }
 
@@ -257,7 +262,7 @@ class ValidationTest {
     fun `QrCodeException 은 RuntimeException 이고 cause 를 보존한다`() {
         val cause = RuntimeException("c")
         val e = QrCodeException("m", cause)
-        assertTrue(e is RuntimeException)
+        assertTrue(RuntimeException::class.java.isAssignableFrom(e.javaClass))
         assertEquals("m", e.message)
         assertSame(cause, e.cause)
         assertEquals(null, QrCodeException("m").cause)

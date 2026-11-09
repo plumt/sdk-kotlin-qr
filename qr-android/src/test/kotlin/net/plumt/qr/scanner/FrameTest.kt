@@ -1,5 +1,7 @@
 package net.plumt.qr.scanner
 
+import android.os.Looper
+import net.plumt.qr.scanner.internal.AnalysisExecutor
 import net.plumt.qr.scanner.internal.FrameAnalyzer
 import net.plumt.qr.scanner.internal.ScanPipeline
 import net.plumt.qr.scanner.internal.ScanSnapshot
@@ -82,7 +84,63 @@ class FrameAnalyzerTest {
             consumeReset = { reset.also { reset = false } },
             sink = { snapshots += it },
             onError = { errors += it },
+            frameListener = { listener },
         )
+        var listener: FrameListener? = null
+    }
+
+    @Test
+    fun frameListener_seesFrameAndDetections_beforeImageIsClosed() {
+        val h = Harness(FakeEngine { listOf(detAt("A", 100f, 100f)) }, options = opts)
+        val img = FakeImageProxy(640, 480, rotation = 90)
+        var seen: List<Detection>? = null
+        var closedWhenSeen = -1
+        var lumaSize = -1
+        h.listener = FrameListener { frame, detections ->
+            seen = detections
+            closedWhenSeen = img.closeCount
+            lumaSize = frame.luminance.size
+        }
+        h.analyzer.analyze(img)
+        assertEquals("A", seen!!.single().result.text)
+        assertEquals("수신자는 반납 전에 불린다", 0, closedWhenSeen)
+        assertTrue(lumaSize > 0)
+        assertEquals(1, img.closeCount)
+        assertEquals(1, h.snapshots.size)
+    }
+
+    @Test
+    fun frameListener_failure_reportsOnce_andAnalysisContinues() {
+        val h = Harness(FakeEngine { emptyList() }, options = opts)
+        h.listener = FrameListener { _, _ -> throw IllegalStateException("app") }
+        repeat(3) {
+            val img = FakeImageProxy(4, 4)
+            h.analyzer.analyze(img)
+            assertEquals(1, img.closeCount)
+        }
+        assertEquals(1, h.errors.size)
+        assertEquals(3, h.snapshots.size)
+    }
+
+    @Test
+    fun frameListener_notCalled_whenPausedOrEngineFails() {
+        var calls = 0
+        val paused = Harness(FakeEngine { emptyList() }, options = opts, paused = true)
+        paused.listener = FrameListener { _, _ -> calls++ }
+        paused.analyzer.analyze(FakeImageProxy(4, 4))
+        val failing = Harness(FakeEngine { throw IllegalStateException("x") }, options = opts)
+        failing.listener = FrameListener { _, _ -> calls++ }
+        failing.analyzer.analyze(FakeImageProxy(4, 4))
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun frameListener_directFrame_isCalled() {
+        val h = Harness(FakeEngine { emptyList() }, options = opts)
+        var calls = 0
+        h.listener = FrameListener { _, _ -> calls++ }
+        h.analyzer.analyze(ScanFrame(ByteArray(16), 4, 4))
+        assertEquals(1, calls)
     }
 
     @Test
@@ -153,6 +211,59 @@ class FrameAnalyzerTest {
     }
 
     @Test
+    fun closedWhileEngineRuns_dropsResult() {
+        // 세션이 닫히는 사이 엔진 안에 있던 프레임 — 끝나도 상태에 옛 박스를 다시 싣지 않는다
+        lateinit var h: Harness
+        val engine = FakeEngine {
+            h.analyzer.close()
+            listOf(detAt("A", 100f, 100f))
+        }
+        h = Harness(engine, options = opts)
+        val img = FakeImageProxy(480, 640)
+        h.analyzer.analyze(img)
+        assertEquals(1, engine.calls)
+        assertEquals(1, img.closeCount)
+        assertTrue(h.snapshots.isEmpty())
+        h.analyzer.analyze(ScanFrame(ByteArray(4), 2, 2))
+        assertEquals(1, engine.calls)
+    }
+
+    @Test
+    fun closeWaitsForInFlightPublish_thenNoMoreSnapshots() {
+        // 분석 스레드가 결과를 내는 중에 메인 스레드가 닫으면, 닫기는 그 결과가 끝날 때까지 기다리고 그 뒤로는 결과가 없다
+        val inSink = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val pipeline = ScanPipeline(ScanMode.Multi, opts)
+        val snapshots = java.util.Collections.synchronizedList(ArrayList<ScanSnapshot>())
+        val analyzer = FrameAnalyzer(
+            engine = FakeEngine { listOf(detAt("A", 100f, 100f)) },
+            pipeline = pipeline,
+            viewSize = { 480f to 640f },
+            paused = { false },
+            consumeReset = { false },
+            sink = {
+                snapshots += it
+                inSink.countDown()
+                release.await()
+            },
+            onError = {},
+        )
+        val worker = Thread { analyzer.analyze(ScanFrame(ByteArray(480 * 640), 480, 640)) }
+        worker.start()
+        assertTrue(inSink.await(5, java.util.concurrent.TimeUnit.SECONDS))
+        val closer = Thread { analyzer.close() }
+        closer.start()
+        closer.join(200)
+        assertTrue("결과를 내는 동안 닫기는 기다린다", closer.isAlive)
+        release.countDown()
+        closer.join(5000)
+        worker.join(5000)
+        assertFalse(closer.isAlive)
+        analyzer.analyze(ScanFrame(ByteArray(480 * 640), 480, 640))
+        assertEquals(1, snapshots.size)
+    }
+
+    @Test
     fun resetFlag_resetsPipelineBeforeFrame() {
         val engine = FakeEngine { listOf(detAt("A", 100f, 100f)) }
         val h = Harness(engine, options = opts)
@@ -199,6 +310,27 @@ class FrameAnalyzerTest {
             val img = FakeImageProxy(w, hh, rnd.nextBytes(stride * hh), stride, listOf(0, 90, 180, 270)[rnd.nextInt(4)], rnd.nextLong())
             h.analyzer.analyze(img)
             assertEquals(1, img.closeCount)
+        }
+    }
+}
+
+/** 분석 스레드 — 인식은 블로킹이라 메인 스레드에서 돌면 안 된다. */
+@org.junit.runner.RunWith(org.robolectric.RobolectricTestRunner::class)
+class AnalysisExecutorTest {
+
+    @Test
+    fun analysisExecutor_runsOffMainThread() {
+        val executor = AnalysisExecutor.create()
+        try {
+            val thread = executor.submit<Thread> { Thread.currentThread() }.get(5, java.util.concurrent.TimeUnit.SECONDS)
+            assertEquals(AnalysisExecutor.THREAD_NAME, thread.name)
+            assertTrue(thread.isDaemon)
+            assertFalse("분석은 메인 스레드에서 돌지 않는다", thread === Looper.getMainLooper().thread)
+            assertFalse(thread === Thread.currentThread())
+            // 단일 스레드 — 프레임이 동시에 분석되지 않는다
+            assertSame(thread, executor.submit<Thread> { Thread.currentThread() }.get(5, java.util.concurrent.TimeUnit.SECONDS))
+        } finally {
+            executor.shutdownNow()
         }
     }
 }

@@ -7,9 +7,9 @@ import net.plumt.qr.QrPayload
 /** 연락처 ↔ vCard·MECARD. */
 internal object ContactCodec {
 
-    private val VCARD_BOUNDARY = Regex(
-        "\\s+(?=(?:[A-Za-z0-9-]+\\.)?(?:BEGIN|VERSION|FN|N|TEL|EMAIL|ORG|TITLE|ADR|URL|NOTE|END)[:;])",
-        RegexOption.IGNORE_CASE,
+    private val VCARD_BOUNDARY = ContentLines.Boundary(
+        setOf("BEGIN", "VERSION", "FN", "N", "TEL", "EMAIL", "ORG", "TITLE", "ADR", "URL", "NOTE", "END"),
+        allowGroup = true,
     )
 
     fun encodeVCard(contact: QrPayload.Contact): String {

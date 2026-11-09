@@ -67,15 +67,24 @@ public interface QrActionExecutor {
     public fun execute(context: Context, action: QrAction): QrActionResult
 
     public companion object {
-        /** 기본 구현. 시스템 Intent 만 쓰고 권한을 요구하지 않는다. */
+        /** 기본 구현. 시스템 Intent 만 쓰고 권한을 요구하지 않는다. 앱 링크는 열지 않는다. */
         @JvmStatic
         @JvmOverloads
         public fun default(options: QrActionOptions = QrActionOptions()): QrActionExecutor = DefaultQrActionExecutor(options)
+
+        /**
+         * 기본 구현 + [appLinks] 가 허용한 앱 링크도 연다. 앱 링크는 `ACTION_VIEW` + `CATEGORY_BROWSABLE` 이고, `intent:` 는
+         * [AppLinkPolicy] 의 설명대로 다듬어 연다. 허용하지 않은 스킴과 다듬을 수 없는 `intent:` 는 [QrActionResult.Failed] 다.
+         * 실행 전 확인은 앱이 받는다([QrActions.requiresConfirmation]).
+         */
+        @JvmStatic
+        public fun default(options: QrActionOptions, appLinks: AppLinkPolicy): QrActionExecutor = DefaultQrActionExecutor(options, appLinks)
     }
 }
 
 internal class DefaultQrActionExecutor(
     private val options: QrActionOptions,
+    private val appLinks: AppLinkPolicy = AppLinkPolicy.NONE,
     private val sdkInt: () -> Int = { Build.VERSION.SDK_INT },
 ) : QrActionExecutor {
 
@@ -85,6 +94,7 @@ internal class DefaultQrActionExecutor(
             is QrAction.CopyWifiPassword -> copy(context, action.wifi.password, sensitive = true)
             is QrAction.CopyOtpSecret -> copy(context, action.otp.secret, sensitive = true)
             is QrAction.ConnectWifi -> connectWifi(context, action.wifi)
+            is QrAction.OpenUrl -> openUrl(context, action)
             else -> start(context, QrIntents.build(action, options.zone))
         }
     } catch (_: ActivityNotFoundException) {
@@ -98,6 +108,29 @@ internal class DefaultQrActionExecutor(
         if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
         return QrActionResult.Started
+    }
+
+    /**
+     * http·https 와 [appLinks] 가 허용한 앱 링크만 연다. 그 밖(`intent:`·`javascript:` 등)은 브라우저가 다른 앱을 실행할 수 있어 거절한다
+     * (경고 표지와 무관하게 주소를 다시 본다).
+     */
+    private fun openUrl(context: Context, action: QrAction.OpenUrl): QrActionResult {
+        val scheme = action.url.toUri().scheme?.lowercase(java.util.Locale.ROOT)
+        if (scheme == "http" || scheme == "https") return start(context, QrIntents.build(action, options.zone))
+        if (!appLinks.allows(action.url)) {
+            return QrActionResult.Failed(
+                ScannerException(
+                    "http·https 가 아닌 주소는 열지 않는다(스킴: ${scheme ?: "없음"}) — 앱 링크는 AppLinkPolicy 로 고른 스킴만 연다",
+                    IllegalArgumentException("scheme=$scheme"),
+                ),
+            )
+        }
+        val intent = try {
+            AppLinkIntents.build(action.url, appLinks)
+        } catch (e: IllegalArgumentException) {
+            return QrActionResult.Failed(ScannerException("앱 링크를 열 수 없다(스킴: $scheme)", e))
+        }
+        return start(context, intent)
     }
 
     private fun connectWifi(context: Context, wifi: QrPayload.Wifi): QrActionResult {
@@ -151,12 +184,20 @@ internal object QrIntents {
             throw IllegalArgumentException("Intent 로 실행하지 않는 동작이다: ${action::class.simpleName}")
     }
 
+    /**
+     * `geo:위도,경도?q=위도,경도(라벨)`. 좌표는 지수 표기 없이(`1.0E-5` 가 아니라 `0.00001`), 라벨은 괄호까지 퍼센트 인코딩해
+     * 라벨 안의 `(`·`)` 가 라벨 경계를 깨지 않게 한다.
+     */
     fun geoUri(geo: QrPayload.Geo): Uri {
-        val point = "${geo.latitude},${geo.longitude}"
+        val point = "${plain(geo.latitude)},${plain(geo.longitude)}"
         val label = geo.query.trim()
-        val q = if (label.isEmpty()) point else "$point($label)"
-        return ("geo:$point?q=" + Uri.encode(q, ",()")).toUri()
+        // Uri.encode 는 ( ) 를 그대로 둔다 — 라벨 안의 괄호는 직접 인코딩한다
+        val encodedLabel = Uri.encode(label).replace("(", "%28").replace(")", "%29")
+        val q = Uri.encode(point, ",") + if (label.isEmpty()) "" else "($encodedLabel)"
+        return "geo:$point?q=$q".toUri()
     }
+
+    private fun plain(value: Double): String = java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
 
     /**
      * 연락처 삽입 화면. 전화·이메일은 표준 칸이 셋씩이라 넷째부터는 `DATA` 행으로 넣는다. 웹 주소도 `DATA` 행이다.

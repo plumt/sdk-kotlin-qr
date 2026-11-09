@@ -41,7 +41,7 @@ internal object Decoders {
 
     fun luminanceSource(luminance: ByteArray, width: Int, height: Int, rowStride: Int): LuminanceSource {
         Preconditions.image(luminance.size, width, height, rowStride)
-        return PlanarYUVLuminanceSource(luminance, rowStride, height, 0, 0, width, height, false)
+        return RotatableSource(PlanarYUVLuminanceSource(luminance, rowStride, height, 0, 0, width, height, false))
     }
 
     /** ARGB → 밝기. 투명도는 흰 바탕에 얹어 계산한다 — 투명 배경 PNG 의 바탕이 검정으로 읽히지 않게. */
@@ -53,7 +53,30 @@ internal object Decoders {
             val gray = (((p shr 16) and 0xFF) + 2 * ((p shr 8) and 0xFF) + (p and 0xFF)) / 4
             ((gray * a + 255 * (255 - a)) / 255).toByte()
         }
-        return PlanarYUVLuminanceSource(luminance, width, height, 0, 0, width, height, false)
+        return RotatableSource(PlanarYUVLuminanceSource(luminance, width, height, 0, 0, width, height, false))
+    }
+
+    /**
+     * 회전을 지원하는 밝기 원본. ZXing 의 1차원 리더는 `TRY_HARDER` 일 때 원본이 회전을 지원해야만 90도 돌려 다시 읽는다 —
+     * [PlanarYUVLuminanceSource] 는 지원하지 않아 세로로 선 바코드를 영영 못 읽는다. 돌린 결과의 점은 엔진이 원래 좌표로 되돌린다.
+     */
+    private class RotatableSource(private val inner: LuminanceSource) : LuminanceSource(inner.width, inner.height) {
+        override fun getRow(y: Int, row: ByteArray?): ByteArray = inner.getRow(y, row)
+        override fun getMatrix(): ByteArray = inner.matrix
+        override fun isCropSupported(): Boolean = inner.isCropSupported
+        override fun crop(left: Int, top: Int, width: Int, height: Int): LuminanceSource =
+            RotatableSource(inner.crop(left, top, width, height))
+        override fun isRotateSupported(): Boolean = true
+
+        /** 시계 반대 방향 90도. 원래 (x, y) → (y, width - 1 - x), 크기 (height x width). */
+        override fun rotateCounterClockwise(): LuminanceSource {
+            val w = width
+            val h = height
+            val src = matrix
+            val out = ByteArray(w * h)
+            for (y in 0 until h) for (x in 0 until w) out[(w - 1 - x) * h + y] = src[y * w + x]
+            return RotatableSource(PlanarYUVLuminanceSource(out, h, w, 0, 0, h, w, false))
+        }
     }
 
     fun read(source: LuminanceSource, options: ReadOptions): ScanResult? = reading {

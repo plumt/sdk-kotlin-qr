@@ -88,6 +88,26 @@ class AutoDeliverGateTest {
         g.reset()
         assertTrue(g.offer(1, "A", 3))
     }
+
+    @Test
+    fun reset_keepsRepeatWindow_soResumeDoesNotRedeliverSameText() {
+        // 넘기기 → 멈춤 → 결과 창 닫기 → 재개: 화면에 남은 같은 코드(재개 뒤 새 추적 번호)를 반복 창 안에 다시 넘기지 않는다
+        val g = gate(stable = 300, repeat = 2000)
+        assertFalse(g.offer(1, "A", 0))
+        assertTrue(g.offer(1, "A", 300))
+        g.reset()
+        assertFalse(g.offer(1, "A", 400))
+        assertFalse("안정 시간이 지나도 반복 창 안", g.offer(1, "A", 1000))
+        assertTrue("반복 창이 지나면 다시 넘긴다", g.offer(1, "A", 2300))
+        // 다른 원문은 반복 창과 무관하다
+        g.reset()
+        assertFalse(g.offer(7, "B", 2400))
+        assertTrue(g.offer(7, "B", 2700))
+        // 새 세션의 시각 기준이 더 작으면(거꾸로) 원문 기록을 지운다
+        g.reset()
+        assertFalse(g.offer(9, "B", 10))
+        assertTrue(g.offer(9, "B", 310))
+    }
 }
 
 class ScanPipelineTest {
@@ -208,13 +228,17 @@ class ScanPipelineTest {
     }
 
     @Test
-    fun reset_startsOver() {
+    fun reset_startsTrackingOver_butKeepsRepeatWindow() {
         val p = ScanPipeline(ScanMode.Single(autoDeliver = true), options())
         assertEquals("A", p.process(listOf(detAt("A", 240f, 320f)), IW, IH, VW, VH, ms(0)).deliver!!.text)
         p.reset()
         val s = p.process(listOf(detAt("A", 240f, 320f)), IW, IH, VW, VH, ms(1))
         assertEquals(2L, s.locked!!.id)
-        assertEquals("A", s.deliver!!.text)
+        assertNull("반복 창(1000ms) 안의 같은 원문", s.deliver)
+        assertEquals("A", p.process(listOf(detAt("A", 240f, 320f)), IW, IH, VW, VH, ms(1001)).deliver!!.text)
+        // 다른 원문은 바로 넘긴다
+        p.reset()
+        assertEquals("B", p.process(listOf(detAt("B", 240f, 320f)), IW, IH, VW, VH, ms(1002)).deliver!!.text)
     }
 
     @Test

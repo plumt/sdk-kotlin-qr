@@ -42,13 +42,13 @@ public class CodeMatrix(public val width: Int, public val height: Int, cells: Bo
     /** 행 우선 배열의 복사본(`[y * width + x]`). */
     public fun toBooleanArray(): BooleanArray = cells.copyOf()
 
-    /** 칸마다 [factor]×[factor] 로 늘린 격자. 결과 크기가 `Int` 배열에 담기지 않으면 [IllegalArgumentException]. */
+    /** 칸마다 [factor]×[factor] 로 늘린 격자. 결과가 [MAX_CELLS] 칸을 넘으면 [IllegalArgumentException]. */
     public fun scaled(factor: Int): CodeMatrix {
         require(factor >= 1) { "factor($factor) 는 1 이상이어야 한다" }
         if (factor == 1) return this
         val w = width.toLong() * factor
         val h = height.toLong() * factor
-        require(w * h <= MAX_CELLS) { "확대한 크기(${w}x$h) 가 너무 크다" }
+        require(w * h <= MAX_CELLS) { "확대한 크기(${w}x$h) 가 너무 크다 — 최대 $MAX_CELLS 칸" }
         val out = BooleanArray((w * h).toInt())
         val ow = w.toInt()
         for (y in 0 until h.toInt()) {
@@ -86,6 +86,10 @@ public class CodeMatrix(public val width: Int, public val height: Int, cells: Bo
         /** 불투명 흰색(0xFFFFFFFF). */
         public const val WHITE: Int = -0x1
 
-        private const val MAX_CELLS = Int.MAX_VALUE.toLong() - 8
+        /**
+         * 만들 수 있는 격자의 최대 칸 수(4096 x 4096). 생성·[scaled] 결과가 이를 넘으면 [IllegalArgumentException] 이다.
+         * ARGB 로 바꾸면 칸마다 4 바이트라 이 상한에서 약 64MB 다 — Android 앱 힙에서 한 번의 실수로 OOM 이 나지 않게 막는다.
+         */
+        public const val MAX_CELLS: Int = 4096 * 4096
     }
 }

@@ -11,11 +11,12 @@ import java.time.format.DateTimeFormatter
 /** 일정 ↔ iCalendar `VEVENT`. */
 internal object EventCodec {
 
-    private val EVENT_BOUNDARY = Regex(
-        "\\s+(?=(?:BEGIN|END|VERSION|PRODID|UID|DTSTAMP|SUMMARY|DTSTART|DTEND|LOCATION|DESCRIPTION)[:;])",
-        RegexOption.IGNORE_CASE,
+    private val EVENT_BOUNDARY = ContentLines.Boundary(
+        setOf("BEGIN", "END", "VERSION", "PRODID", "UID", "DTSTAMP", "SUMMARY", "DTSTART", "DTEND", "LOCATION", "DESCRIPTION"),
+        allowGroup = false,
     )
-    private val ICAL_TIME = Regex("^(\\d{4})(\\d{2})(\\d{2})(?:[Tt](\\d{2})(\\d{2})(\\d{2})?([Zz])?)?$")
+    // iCalendar 날짜·시각은 ASCII 숫자만이다. \d 는 Android 에서 유니코드 숫자까지 맞춰 JVM 과 결과가 달라진다
+    private val ICAL_TIME = Regex("^([0-9]{4})([0-9]{2})([0-9]{2})(?:[Tt]([0-9]{2})([0-9]{2})([0-9]{2})?([Zz])?)?$")
     private val DATE = DateTimeFormatter.ofPattern("uuuuMMdd")
     private val DATE_TIME = DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss")
     private val YEARS = 1..9999

@@ -58,6 +58,40 @@ public object ScannerDefaults {
         UrlWarning.INTERNATIONALIZED -> R.string.plumt_qr_warning_internationalized
         UrlWarning.IP_ADDRESS -> R.string.plumt_qr_warning_ip_address
         UrlWarning.UNREADABLE_HOST -> R.string.plumt_qr_warning_unreadable_host
+        UrlWarning.NON_WEB_SCHEME -> R.string.plumt_qr_warning_non_web_scheme
+    }
+
+    /**
+     * 확인창 본문에 보일, 동작이 실제로 다룰 값(번호·받는 사람·네트워크 이름 등). 사용자가 무엇을 승인하는지 알게 한다.
+     * 비밀(Wi-Fi 비밀번호·OTP 비밀·민감 표시한 글)은 넣지 않는다 — 대신 네트워크 이름·계정을 보인다. 링크는 호스트를 따로 보이므로
+     * 주소(사용자 정보는 가림)다. 보일 것이 없으면 빈 문자열.
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun actionDetail(action: QrAction, zone: ZoneId = ZoneId.systemDefault()): String = when (action) {
+        is QrAction.OpenUrl -> QrPayload.Url(action.url).summary(zone)
+        is QrAction.ConnectWifi -> action.wifi.ssid
+        is QrAction.CopyWifiPassword -> action.wifi.ssid
+        is QrAction.AddContact -> action.contact.summary(zone)
+        is QrAction.AddEvent -> action.event.summary(zone)
+        is QrAction.Dial -> action.number
+        is QrAction.SendSms -> lines(action.number, action.message)
+        is QrAction.SendEmail -> lines(action.address, action.subject, action.body)
+        is QrAction.ShowLocation -> action.geo.summary(zone)
+        is QrAction.AddOtp -> action.otp.summary(zone)
+        is QrAction.CopyOtpSecret -> action.otp.summary(zone)
+        is QrAction.SearchProduct -> action.code
+        is QrAction.CopyText -> if (action.sensitive) "" else action.text
+    }.trim().let(::clip)
+
+    private fun lines(vararg parts: String) = parts.map(String::trim).filter(String::isNotEmpty).joinToString("\n")
+
+    /** 확인창 본문 상한(코드 포인트). 긴 본문이 창을 덮지 않게 자른다. */
+    private const val DETAIL_MAX_LENGTH = 200
+
+    private fun clip(s: String): String {
+        if (s.codePointCount(0, s.length) <= DETAIL_MAX_LENGTH) return s
+        return s.substring(0, s.offsetByCodePoints(0, DETAIL_MAX_LENGTH - 1)).trimEnd() + ELLIPSIS
     }
 
     /**
@@ -77,7 +111,9 @@ public object ScannerDefaults {
         return oneLine.substring(0, end).trimEnd() + ELLIPSIS
     }
 
-    private val WHITESPACE = Regex("\\s+")
+    // \s 를 쓰지 않는다 — Android 는 유니코드 공백(U+3000·NBSP)까지 맞춰 JVM 과 결과가 달라진다.
+    // 한 줄로 만드는 것이 목적이라 ASCII 공백·제어 공백과 유니코드 줄 구분자(U+0085·U+2028·U+2029)만 접고, 내용인 전각·고정 공백은 둔다
+    private val WHITESPACE = Regex("[ \\t\\n\\u000B\\f\\r\\u0085\\u2028\\u2029]+")
     private const val ELLIPSIS = "…"
 }
 

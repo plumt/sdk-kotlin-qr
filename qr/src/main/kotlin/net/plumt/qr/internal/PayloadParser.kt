@@ -2,20 +2,24 @@ package net.plumt.qr.internal
 
 import net.plumt.qr.OtpAlgorithm
 import net.plumt.qr.OtpType
+import net.plumt.qr.ParseOptions
 import net.plumt.qr.QrPayload
 import net.plumt.qr.WifiSecurity
 
 /**
- * 문자열 → [QrPayload]. 던지지 않는다.
+ * 문자열 → [QrPayload]. 던지지 않는다. 입력 길이에 선형 시간이다(정규식은 앞에 고정된 짧은 것만 쓴다).
  *
  * 구조로 읽은 값은 마지막에 [QrPayload.encode] 로 한 번 써 본다. 쓸 수 없는 값(빈 SSID, 범위 밖 좌표 등)은 원문 [QrPayload.Text] 로
  * 돌려, "parse 가 준 구조화된 값은 언제나 다시 쓸 수 있다" 를 지킨다.
  */
 internal object PayloadParser {
 
-    fun parse(text: String): QrPayload {
+    fun parse(text: String, options: ParseOptions = ParseOptions.DEFAULT): QrPayload {
+        // 시간 상한 — 비정상적으로 긴 원문은 구조를 풀지 않는다(QrPayload.MAX_PARSE_LENGTH)
+        if (text.length > QrPayload.MAX_PARSE_LENGTH) return QrPayload.Text(text)
         val structured = try {
-            dispatch(text.trim())
+            val trimmed = text.trim()
+            dispatch(trimmed) ?: infer(trimmed, options)
         } catch (@Suppress("TooGenericExceptionCaught") e: RuntimeException) {
             // 어떤 입력에도 던지지 않는 것이 계약이다. 깨진 입력은 원문 텍스트로 돌린다
             null
@@ -46,6 +50,13 @@ internal object PayloadParser {
             has("otpauth://") -> parseOtp(t.substring(10))
             else -> null
         }
+    }
+
+    /** 스킴 없는 글의 추정(옵트인). [ParseOptions] 의 표가 정본이다. */
+    private fun infer(t: String, options: ParseOptions): QrPayload? = when {
+        options.inferEmail && BareContact.isEmail(t) -> QrPayload.Email(t)
+        options.inferPhone && BareContact.isPhone(t) -> QrPayload.Phone(t)
+        else -> null
     }
 
     private fun parseWifi(content: String): QrPayload.Wifi? {

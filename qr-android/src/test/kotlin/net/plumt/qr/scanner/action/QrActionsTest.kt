@@ -5,6 +5,7 @@ import net.plumt.qr.EventTime
 import net.plumt.qr.QrPayload
 import net.plumt.qr.ScanResult
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -145,10 +146,82 @@ class QrActionsTest {
     }
 
     @Test
-    fun openUrl_noScheme_treatsAsAuthority() {
+    fun openUrl_noScheme_addsHttps() {
         val a = QrActions.openUrl("  example.com/x  ")
-        assertEquals("example.com/x", a.url)
+        assertEquals("https://example.com/x", a.url)
         assertEquals("example.com", a.host)
+        assertTrue(a.warnings.isEmpty())
+        // 콜론 뒤가 포트면 스킴이 아니다
+        val port = QrActions.openUrl("localhost:8080/x")
+        assertEquals("https://localhost:8080/x", port.url)
+        assertEquals("localhost", port.host)
+        assertEquals("https://example.com:", QrActions.openUrl("example.com:").url)
+        // 스킴 없는 주소 payload 도 https 로 연다
+        assertEquals("https://example.com", (QrActions.primary(QrPayload.Url("example.com")) as QrAction.OpenUrl).url)
+    }
+
+    @Test
+    fun openUrl_nonWebSchemes_areFlagged() {
+        val intent = QrActions.openUrl("intent://scan/#Intent;scheme=zxing;package=com.example;end")
+        assertEquals("intent://scan/#Intent;scheme=zxing;package=com.example;end", intent.url)
+        assertTrue(UrlWarning.NON_WEB_SCHEME in intent.warnings)
+        assertEquals("scan", intent.host)
+        for (u in listOf("javascript:alert(1)", "JavaScript:alert(document.cookie)", "data:text/html,<b>x</b>", "file:///sdcard/a", "market://details?id=x", "content://x/y")) {
+            val a = QrActions.openUrl(u)
+            assertEquals(u, u, a.url)
+            assertTrue(u, UrlWarning.NON_WEB_SCHEME in a.warnings)
+            assertFalse(u, UrlWarning.NOT_HTTPS in a.warnings)
+        }
+        val js = QrActions.openUrl("javascript:alert(1)")
+        assertEquals("", js.host)
+        assertEquals(setOf(UrlWarning.NON_WEB_SCHEME, UrlWarning.UNREADABLE_HOST), js.warnings)
+        // 권한부가 스킴 바로 뒤가 아니다
+        assertTrue(UrlWarning.UNREADABLE_HOST in QrActions.openUrl("mailto:a" + "@" + "b.example?x=http://y").warnings)
+        assertFalse(UrlWarning.NON_WEB_SCHEME in QrActions.openUrl("HTTPS://Example.com").warnings)
+        assertEquals(setOf(UrlWarning.NOT_HTTPS), QrActions.openUrl("HTTP://example.com").warnings)
+        assertEquals("ftp", QrActions.schemeOf("FTP://x"))
+        assertNull(QrActions.schemeOf("host:443"))
+        assertNull(QrActions.schemeOf("host:443?x"))
+        assertNull(QrActions.schemeOf(""))
+    }
+
+    @Test
+    fun openUrl_numericHosts_followWhatwgIpv4() {
+        for ((u, ip) in listOf(
+            "https://2130706433/" to "127.0.0.1",
+            "https://0x7f000001/" to "127.0.0.1",
+            "https://0X7F.1/" to "127.0.0.1",
+            "https://127.1/" to "127.0.0.1",
+            "https://127.0.1/" to "127.0.0.1",
+            "https://0177.0.0.1/" to "127.0.0.1",
+            "https://0x7f.0.0.0x1/" to "127.0.0.1",
+            "https://203.0.113.9./" to "203.0.113.9",
+            "https://0/" to "0.0.0.0",
+            "https://0x/" to "0.0.0.0",
+            "https://4294967295/" to "255.255.255.255",
+            "https://user@203.1/x" to "203.0.0.1",
+            "https://１２７.0.0.1/" to "127.0.0.1",
+        )) {
+            val a = QrActions.openUrl(u)
+            assertEquals(u, ip, a.host)
+            assertEquals(u, ip, a.displayHost)
+            assertTrue(u, UrlWarning.IP_ADDRESS in a.warnings)
+            assertFalse(u, UrlWarning.UNREADABLE_HOST in a.warnings)
+        }
+        // 숫자로 끝나지만 IPv4 로 읽히지 않으면 브라우저도 열지 못한다 — 읽지 못한 호스트
+        for (u in listOf("https://4294967296/", "https://256.1.1.1/", "https://1.2.3.4.5/", "https://example.123/", "https://08/",
+            "https://1.2.3.256/", "https://99999999999999999999999/", "https://0xffffffffffffffffffff/")) {
+            val a = QrActions.openUrl(u)
+            assertTrue(u, UrlWarning.IP_ADDRESS in a.warnings)
+            assertTrue(u, UrlWarning.UNREADABLE_HOST in a.warnings)
+        }
+        // 숫자로 끝나지 않으면 도메인이다
+        for (u in listOf("https://1.2.3.4a/", "https://example.com/", "https://0x7f.example/", "https://a.0xg/", "https://0x1g/x")) {
+            assertFalse(u, UrlWarning.IP_ADDRESS in QrActions.openUrl(u).warnings)
+        }
+        assertEquals("127.0.0.1", net.plumt.qr.scanner.action.Ipv4.parse("127.0.0.1"))
+        assertNull(net.plumt.qr.scanner.action.Ipv4.parse(""))
+        assertNull(net.plumt.qr.scanner.action.Ipv4.parse("1..2"))
     }
 
     @Test

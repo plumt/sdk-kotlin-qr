@@ -56,6 +56,13 @@ class ModelTest {
         assertEquals("y(2) 는 0..1 범위여야 한다", assertThrows(IllegalArgumentException::class.java) { sample.row(2) }.message)
         assertEquals("factor(0) 는 1 이상이어야 한다", assertThrows(IllegalArgumentException::class.java) { sample.scaled(0) }.message)
         assertThrows(IllegalArgumentException::class.java) { sample.scaled(40_000) }
+        // 확대 결과도 생성 상한(4096x4096)을 넘지 않는다 — 앱 실수 한 번에 OOM 이 나지 않게
+        val big = CodeMatrix(64, 64, BooleanArray(64 * 64))
+        assertEquals(4096, big.scaled(64).width)
+        assertEquals(
+            "확대한 크기(4160x4160) 가 너무 크다 — 최대 ${CodeMatrix.MAX_CELLS} 칸",
+            assertThrows(IllegalArgumentException::class.java) { big.scaled(65) }.message,
+        )
     }
 
     @Test

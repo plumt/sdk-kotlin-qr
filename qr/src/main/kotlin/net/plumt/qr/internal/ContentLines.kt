@@ -1,6 +1,7 @@
 package net.plumt.qr.internal
 
 import java.io.ByteArrayOutputStream
+import java.util.Locale
 
 /**
  * vCard·iCalendar 의 "내용 줄"(`group.NAME;PARAM=V;BARE:value`).
@@ -75,11 +76,11 @@ internal object ContentLines {
 
     /**
      * 원문을 내용 줄로 나눈다. 접힌 줄(다음 줄이 공백·탭으로 시작)과 QUOTED-PRINTABLE 의 소프트 줄바꿈(`=` 로 끝남)을 잇는다.
-     * 줄바꿈이 하나도 없으면 줄바꿈이 공백으로 뭉개진 것으로 보고 [collapsedBoundary] 앞에서 끊는다.
+     * 줄바꿈이 하나도 없으면 줄바꿈이 공백으로 뭉개진 것으로 보고 [boundary] 의 속성 이름 앞에서 끊는다([splitCollapsed]).
      */
-    fun parse(content: String, collapsedBoundary: Regex): List<ContentLine> {
+    fun parse(content: String, boundary: Boundary): List<ContentLine> {
         val physical = content.split(LINE_BREAK).let { lines ->
-            if (lines.size == 1) content.split(collapsedBoundary) else lines
+            if (lines.size == 1) splitCollapsed(content, boundary) else lines
         }
         val logical = mutableListOf<StringBuilder>()
         physical.forEach { line ->
@@ -95,6 +96,67 @@ internal object ContentLines {
         }
         return logical.mapNotNull { parseLine(it.toString().trim()) }
     }
+
+    /**
+     * 뭉개진 원문에서 줄 경계로 볼 속성 이름.
+     * @property names 대문자 속성 이름
+     * @property allowGroup `item1.TEL:` 처럼 그룹 접두사(`[A-Za-z0-9-]+.`)를 허용하는가
+     */
+    class Boundary(val names: Set<String>, val allowGroup: Boolean)
+
+    /**
+     * 공백 덩어리(정규식 `\s` 와 같은 ASCII 공백) 뒤에 `[그룹.]이름` + `:`·`;` 가 오면 그 덩어리를 지우고 나눈다.
+     *
+     * 한 번 훑기다(선형 시간). 공백 덩어리 끝에서만 바로 뒤의 토큰 하나를 본다 — 토큰은 공백이 아니므로 덩어리와 겹치지 않아
+     * 글자마다 많아야 두 번 읽는다. 전방탐색 정규식(`\s+(?=...)`)은 키워드가 없는 긴 공백 덩어리에서 시작 위치마다
+     * 덩어리 끝까지 되돌아가 이차 시간이 된다.
+     */
+    fun splitCollapsed(content: String, boundary: Boundary): List<String> {
+        val parts = ArrayList<String>()
+        var start = 0
+        var i = 0
+        val n = content.length
+        while (i < n) {
+            if (!isSpace(content[i])) {
+                i++
+                continue
+            }
+            val runStart = i
+            while (i < n && isSpace(content[i])) i++
+            if (i < n && startsProperty(content, i, boundary)) {
+                parts += content.substring(start, runStart)
+                start = i
+            }
+        }
+        parts += content.substring(start)
+        return parts
+    }
+
+    private fun startsProperty(s: String, at: Int, boundary: Boundary): Boolean {
+        val end = tokenEnd(s, at)
+        if (end == at || end >= s.length) return false
+        return when (s[end]) {
+            ':', ';' -> s.substring(at, end).uppercase(Locale.ROOT) in boundary.names
+            '.' -> {
+                if (!boundary.allowGroup) return false
+                val nameEnd = tokenEnd(s, end + 1)
+                nameEnd > end + 1 && nameEnd < s.length && (s[nameEnd] == ':' || s[nameEnd] == ';') &&
+                    s.substring(end + 1, nameEnd).uppercase(Locale.ROOT) in boundary.names
+            }
+            else -> false
+        }
+    }
+
+    private fun tokenEnd(s: String, from: Int): Int {
+        var j = from
+        while (j < s.length && isTokenChar(s[j])) j++
+        return j
+    }
+
+    private fun isTokenChar(c: Char) = c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '-'
+
+    // java.util.regex 의 \s(UNICODE_CHARACTER_CLASS 없음)와 같은 집합
+    private fun isSpace(c: Char) = c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\u000C' || c == '\r'
 
     private fun isQuotedPrintable(line: CharSequence): Boolean {
         val colon = line.indexOf(':')

@@ -34,10 +34,16 @@ internal object Summaries {
         return t.startsWith("WIFI:", ignoreCase = true) || t.startsWith("otpauth", ignoreCase = true)
     }
 
-    private val USER_INFO = Regex("^(\\s*[a-zA-Z][a-zA-Z0-9+.-]*://)[^/?#@]*@")
+    private val USER_INFO = Regex("^([a-zA-Z][a-zA-Z0-9+.-]*://)[^/?#@]*@")
 
-    /** 주소의 사용자 정보(`사용자:비밀번호@`)를 `****@` 로 바꾼다. */
-    fun maskUserInfo(url: String): String = USER_INFO.replace(url) { it.groupValues[1] + "****@" }
+    /**
+     * 주소의 사용자 정보(`사용자:비밀번호@`)를 `****@` 로 바꾼다. 앞 공백은 유니코드 공백(전각 등)까지 건너뛴다 —
+     * 정규식 `\s` 는 엔진마다 공백 집합이 달라(JVM 은 ASCII, Android 는 유니코드) 가리기 여부가 갈렸다.
+     */
+    fun maskUserInfo(url: String): String {
+        val lead = url.takeWhile { it.isWhitespace() }
+        return lead + USER_INFO.replace(url.substring(lead.length)) { it.groupValues[1] + "****@" }
+    }
 
     /** 종일은 날짜만, 시각은 [zone] 의 현지 시각. 시간대 없는 시각은 적힌 그대로 보인다. */
     fun eventTime(time: EventTime, zone: ZoneId): String = when (time) {

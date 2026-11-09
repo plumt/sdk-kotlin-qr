@@ -10,6 +10,9 @@ import net.plumt.qr.scanner.AutoDeliverOptions
  * - 같은 원문은 마지막으로 넘긴 시각부터 [AutoDeliverOptions.repeatWindowMillis] 안에 다시 넘기지 않는다
  *   (코드가 화면에서 잠깐 빠졌다 들어와 새 번호가 붙어도 막는다)
  * - 시각이 거꾸로 가면(카메라 재시작으로 시각 기준이 바뀜) 경과 시간을 0 으로 보고, 원문 기록을 지운다
+ * - [reset](멈춤 뒤 재개·새 세션)은 고정·넘긴 추적 번호만 지운다. 마지막으로 넘긴 원문과 시각은 남겨 반복 창을 잇는다 —
+ *   넘기기 → 멈춤 → 결과 창 닫기 → 재개에서 화면에 남은 같은 코드를 곧바로 다시 넘기지 않게. 마지막 시각도 남겨, 새 세션의
+ *   시각 기준이 더 작으면 위 규칙대로 원문 기록을 지운다
  */
 internal class AutoDeliverGate(private val options: AutoDeliverOptions) {
 
@@ -23,8 +26,6 @@ internal class AutoDeliverGate(private val options: AutoDeliverOptions) {
     fun reset() {
         lockedId = null
         deliveredIds.clear()
-        lastText = null
-        lastNow = Long.MIN_VALUE
     }
 
     /** 지금 살아 있는 추적 번호만 기억에 남긴다(지워진 번호는 다시 오지 않는다). */

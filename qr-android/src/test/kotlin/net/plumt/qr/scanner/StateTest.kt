@@ -241,6 +241,42 @@ class ScannerStateTest {
     }
 
     @Test
+    fun retry_onlyFromErrorOrNoCamera() {
+        val s = state()
+        assertFalse("시작 중에는 재시도하지 않는다", s.retry())
+        assertEquals(0, s.session.value)
+        s.onCameraOpened(FakeCamera())
+        assertFalse(s.retry())
+        s.onCameraError(ScannerException("사용 중"))
+        assertTrue(s.retry())
+        assertEquals(CameraStatus.Starting, s.cameraStatus.value)
+        assertEquals(1, s.session.value)
+        s.onNoCamera()
+        assertTrue(s.retry())
+        assertEquals(2, s.session.value)
+        // 권한이 없으면 권한 필요로 바꾸고 다시 열지 않는다
+        s.onCameraError(ScannerException("x"))
+        granted = false
+        assertFalse(s.retry())
+        assertEquals(CameraStatus.PermissionRequired, s.cameraStatus.value)
+        assertEquals(2, s.session.value)
+        assertFalse(s.retry())
+    }
+
+    @Test
+    fun updateEngine_onlyEngineMayChange() {
+        val o = ScannerOptions(engine = ScanEngines.zxing())
+        val s = state(options = o)
+        val other = ScanEngine.Factory { _, _ -> FakeEngine() }
+        s.updateEngine(o.copy(engine = other))
+        assertSame(other, s.options.engine)
+        assertEquals(o.copy(engine = other), s.options)
+        val e = assertThrows<IllegalArgumentException> { s.updateEngine(o.copy(lens = CameraLens.FRONT)) }
+        assertEquals("엔진 밖의 설정이 바뀌면 상태를 새로 만든다", e.message)
+        assertSame(other, s.options.engine)
+    }
+
+    @Test
     fun exposesModeAndOptions() {
         val o = ScannerOptions(engine = ScanEngines.zxing(), lens = CameraLens.FRONT)
         val s = state(ScanMode.Multi, o)

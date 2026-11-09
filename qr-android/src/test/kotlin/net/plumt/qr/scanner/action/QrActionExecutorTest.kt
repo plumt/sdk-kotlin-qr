@@ -122,7 +122,33 @@ class QrActionExecutorTest {
         assertEquals("37.5665,126.978(서울 시청)", android.net.Uri.decode(i.dataString!!.substringAfter("?q=")))
         assertFalse("검색어의 공백·한글은 인코딩된다", i.dataString!!.contains(" "))
         executor.execute(app, QrAction.ShowLocation(QrPayload.Geo(-33.0, 151.0)))
-        assertEquals("geo:-33.0,151.0?q=-33.0,151.0", started().dataString)
+        assertEquals("geo:-33,151?q=-33,151", started().dataString)
+    }
+
+    @Test
+    fun geo_plainDecimals_andLabelParenthesesEncoded() {
+        // 지수 표기(1.0E-5)는 지도 앱이 읽지 못한다. 라벨의 괄호는 라벨 경계를 깨지 않게 인코딩한다
+        executor.execute(app, QrAction.ShowLocation(QrPayload.Geo(0.00001, 127.5, query = "a)b(c")))
+        assertEquals("geo:0.00001,127.5?q=0.00001,127.5(a%29b%28c)", started().dataString)
+        executor.execute(app, QrAction.ShowLocation(QrPayload.Geo(0.0, -0.0000001)))
+        assertEquals("geo:0,-0.0000001?q=0,-0.0000001", started().dataString)
+        executor.execute(app, QrAction.ShowLocation(QrPayload.Geo(90.0, 180.0, query = "  ")))
+        assertEquals("geo:90,180?q=90,180", started().dataString)
+    }
+
+    @Test
+    fun openUrl_refusesNonWebSchemes() {
+        for (u in listOf("intent://scan/#Intent;scheme=zxing;end", "javascript:alert(1)", "file:///sdcard/x", "market://details?id=x")) {
+            val r = executor.execute(app, QrActions.openUrl(u))
+            assertTrue(u, r is QrActionResult.Failed)
+            assertTrue(u, (r as QrActionResult.Failed).error.cause is IllegalArgumentException)
+            assertNull(u, shadowOf(app).nextStartedActivity)
+        }
+        // 스킴 없는 주소는 https 로 연다
+        assertEquals(QrActionResult.Started, executor.execute(app, QrActions.openUrl("example.com/x")))
+        assertEquals("https://example.com/x", started().dataString)
+        assertEquals(QrActionResult.Started, executor.execute(app, QrActions.openUrl("HTTP://example.com")))
+        assertEquals("HTTP://example.com", started().dataString)
     }
 
     @Test

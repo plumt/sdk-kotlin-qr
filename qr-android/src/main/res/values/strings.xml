@@ -34,5 +34,8 @@
     <string name="plumt_qr_warning_internationalized">This address uses non-Latin letters and may imitate another site.</string>
     <string name="plumt_qr_warning_ip_address">This link points to an IP address, not a domain name.</string>
     <string name="plumt_qr_warning_unreadable_host">The site address could not be read.</string>
+    <string name="plumt_qr_warning_non_web_scheme">This is not a web (http/https) address. It will not be opened because it could launch another app or run a script.</string>
+    <string name="plumt_qr_confirm_app_link_title">Open another app?</string>
+    <string name="plumt_qr_warning_app_link">This opens another app right away. Do not continue if you do not know where this code came from.</string>
     <string name="plumt_qr_code_description">%1$s: %2$s</string>
 </resources>

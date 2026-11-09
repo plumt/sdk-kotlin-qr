@@ -10,6 +10,8 @@ import java.time.ZoneId
 
 class QrPayloadSummaryTest {
 
+    private val AT = "@"
+
     private val seoul = ZoneId.of("Asia/Seoul")
 
     @Test
@@ -17,6 +19,19 @@ class QrPayloadSummaryTest {
         val summary = QrPayload.summarize("WIFI:T:WPA;S:AcmeTest;P:test1234;;")
         assertEquals("AcmeTest", summary)
         assertFalse(summary.contains("test1234"))
+    }
+
+    @Test
+    fun `주소 요약은 사용자 정보(사용자·비밀번호)를 가린다`() {
+        // 사용자 정보 구분자 @ 를 따로 붙인다(문서 검사기가 이메일로 오인하지 않게)
+        val summary = QrPayload.parse("https://user:secret" + AT + "bank.com/").summary()
+        assertEquals("https://****@bank.com/", summary)
+        assertFalse(summary.contains("secret"))
+        assertEquals("https://****@bank.com/", QrPayload.summarize(" https://user:secret" + AT + "bank.com/ "))
+        assertEquals("http://****@a.example/x?y=1", QrPayload.Url("http://u" + AT + "a.example/x?y=1").summary())
+        // 사용자 정보가 없으면 그대로, 경로·조각의 @ 는 사용자 정보가 아니다
+        assertEquals("https://a.example/@me", QrPayload.Url("https://a.example/@me").summary())
+        assertEquals("https://a.example", QrPayload.Url("https://a.example").summary())
     }
 
     @Test

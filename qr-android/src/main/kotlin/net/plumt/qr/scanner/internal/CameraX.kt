@@ -37,11 +37,11 @@ internal class CameraXBinder(
     private val owner: LifecycleOwner,
     private val previewView: PreviewView,
     private val state: ScannerState,
-) : AutoCloseable {
+) : CameraSession {
 
     private val appContext = context.applicationContext
     private val mainExecutor = ContextCompat.getMainExecutor(context)
-    private val analysisExecutor: ExecutorService = Executors.newSingleThreadExecutor { r -> Thread(r, "plumt-qr-analysis") }
+    private val analysisExecutor: ExecutorService = AnalysisExecutor.create()
     private var closed = false
     private var provider: ProcessCameraProvider? = null
     private var preview: Preview? = null
@@ -51,7 +51,7 @@ internal class CameraXBinder(
     private val torchObserver = Observer<Int> { state.onTorchChanged(it == androidx.camera.core.TorchState.ON) }
     private val zoomObserver = Observer<androidx.camera.core.ZoomState> { state.onZoomChanged(it.zoomRatio, it.minZoomRatio, it.maxZoomRatio) }
 
-    fun start() {
+    override fun start() {
         val future = ProcessCameraProvider.getInstance(appContext)
         future.addListener({
             if (closed) return@addListener
@@ -131,6 +131,31 @@ internal class CameraXBinder(
         this.preview = null
         this.analysis = null
     }
+}
+
+/** 미리보기 하나의 카메라 세션. [start] 로 열고 [close] 로 푼다. 메인 스레드에서 부른다. */
+internal interface CameraSession : AutoCloseable {
+    fun start()
+    override fun close()
+}
+
+/** 카메라 세션을 만든다. 기본은 CameraX, 테스트는 대역을 넣는다. */
+internal fun interface CameraSessionFactory {
+    fun create(context: Context, owner: LifecycleOwner, previewView: PreviewView, state: ScannerState): CameraSession
+
+    companion object {
+        val CameraX: CameraSessionFactory = CameraSessionFactory(::CameraXBinder)
+    }
+}
+
+/**
+ * 프레임 분석 전용 스레드. 인식(엔진)은 블로킹이라 메인 스레드에서 돌리면 안 된다 — CameraX 의 분석기는 이 스레드 하나에서만 불린다.
+ * 데몬 스레드라 세션을 닫지 못한 채 프로세스가 끝나도 종료를 막지 않는다.
+ */
+internal object AnalysisExecutor {
+    const val THREAD_NAME = "plumt-qr-analysis"
+
+    fun create(): ExecutorService = Executors.newSingleThreadExecutor { r -> Thread(r, THREAD_NAME).apply { isDaemon = true } }
 }
 
 /** 열린 CameraX 카메라 조작. 초점 좌표는 [PreviewView] 의 측광 점 공장이 뷰 좌표 → 센서 좌표로 바꾼다. */

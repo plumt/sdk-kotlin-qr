@@ -1,3 +1,14 @@
+public final class net/plumt/qr/ArgbImage {
+	public fun <init> (II[I)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun get (II)I
+	public final fun getHeight ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public final fun toIntArray ()[I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class net/plumt/qr/Barcode {
 	public static final field INSTANCE Lnet/plumt/qr/Barcode;
 	public static final fun encode (Ljava/lang/String;Lnet/plumt/qr/CodeFormat;)Lnet/plumt/qr/CodeMatrix;
@@ -34,7 +45,6 @@ public final class net/plumt/qr/BarcodeNumberType : java/lang/Enum {
 }
 
 public final class net/plumt/qr/BarcodeOptions {
-	public static final field MAX_CELLS J
 	public fun <init> ()V
 	public fun <init> (IILjava/lang/Integer;)V
 	public synthetic fun <init> (IILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -47,6 +57,43 @@ public final class net/plumt/qr/BarcodeOptions {
 	public final fun getHeight ()I
 	public final fun getMargin ()Ljava/lang/Integer;
 	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/CellArea {
+	public fun <init> (IIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun contains (II)Z
+	public final fun copy (IIII)Lnet/plumt/qr/CellArea;
+	public static synthetic fun copy$default (Lnet/plumt/qr/CellArea;IIIIILjava/lang/Object;)Lnet/plumt/qr/CellArea;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getHeight ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/CodeColors {
+	public fun <init> ()V
+	public fun <init> (IIZ)V
+	public synthetic fun <init> (IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()Z
+	public final fun copy (IIZ)Lnet/plumt/qr/CodeColors;
+	public static synthetic fun copy$default (Lnet/plumt/qr/CodeColors;IIZILjava/lang/Object;)Lnet/plumt/qr/CodeColors;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackground ()I
+	public final fun getCheckContrast ()Z
+	public final fun getForeground ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -69,6 +116,7 @@ public final class net/plumt/qr/CodeFormat : java/lang/Enum {
 	public static final field QR_ONLY Ljava/util/Set;
 	public static final field UPC_A Lnet/plumt/qr/CodeFormat;
 	public static final field UPC_E Lnet/plumt/qr/CodeFormat;
+	public static final fun fromName (Ljava/lang/String;)Lnet/plumt/qr/CodeFormat;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getKind ()Lnet/plumt/qr/CodeFormat$Kind;
 	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/CodeFormat;
@@ -76,6 +124,7 @@ public final class net/plumt/qr/CodeFormat : java/lang/Enum {
 }
 
 public final class net/plumt/qr/CodeFormat$Companion {
+	public final fun fromName (Ljava/lang/String;)Lnet/plumt/qr/CodeFormat;
 }
 
 public final class net/plumt/qr/CodeFormat$Kind : java/lang/Enum {
@@ -87,9 +136,21 @@ public final class net/plumt/qr/CodeFormat$Kind : java/lang/Enum {
 	public static fun values ()[Lnet/plumt/qr/CodeFormat$Kind;
 }
 
+public final class net/plumt/qr/CodeImages {
+	public static final field INSTANCE Lnet/plumt/qr/CodeImages;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;I)Lnet/plumt/qr/ArgbImage;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;II)Lnet/plumt/qr/ArgbImage;
+	public static final fun render (Lnet/plumt/qr/CodeMatrix;IILnet/plumt/qr/CodeColors;)Lnet/plumt/qr/ArgbImage;
+	public static final fun render (Lnet/plumt/qr/LogoQrCode;ILnet/plumt/qr/ArgbImage;)Lnet/plumt/qr/ArgbImage;
+	public static final fun render (Lnet/plumt/qr/LogoQrCode;ILnet/plumt/qr/ArgbImage;Lnet/plumt/qr/CodeColors;)Lnet/plumt/qr/ArgbImage;
+	public static synthetic fun render$default (Lnet/plumt/qr/CodeMatrix;IILnet/plumt/qr/CodeColors;ILjava/lang/Object;)Lnet/plumt/qr/ArgbImage;
+	public static synthetic fun render$default (Lnet/plumt/qr/LogoQrCode;ILnet/plumt/qr/ArgbImage;Lnet/plumt/qr/CodeColors;ILjava/lang/Object;)Lnet/plumt/qr/ArgbImage;
+}
+
 public final class net/plumt/qr/CodeMatrix {
 	public static final field BLACK I
 	public static final field Companion Lnet/plumt/qr/CodeMatrix$Companion;
+	public static final field MAX_CELLS I
 	public static final field WHITE I
 	public fun <init> (II[Z)V
 	public fun equals (Ljava/lang/Object;)Z
@@ -129,6 +190,16 @@ public final class net/plumt/qr/CodeReader {
 	public static synthetic fun readAll$default ([IIILnet/plumt/qr/ReadOptions;ILjava/lang/Object;)Ljava/util/List;
 }
 
+public final class net/plumt/qr/ColorReadability : java/lang/Enum {
+	public static final field INVERTED Lnet/plumt/qr/ColorReadability;
+	public static final field LOW_CONTRAST Lnet/plumt/qr/ColorReadability;
+	public static final field MARGINAL Lnet/plumt/qr/ColorReadability;
+	public static final field READABLE Lnet/plumt/qr/ColorReadability;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/ColorReadability;
+	public static fun values ()[Lnet/plumt/qr/ColorReadability;
+}
+
 public final class net/plumt/qr/ContactPhone {
 	public fun <init> (Ljava/lang/String;Lnet/plumt/qr/PhoneType;)V
 	public synthetic fun <init> (Ljava/lang/String;Lnet/plumt/qr/PhoneType;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -149,6 +220,7 @@ public final class net/plumt/qr/ErrorCorrection : java/lang/Enum {
 	public static final field M Lnet/plumt/qr/ErrorCorrection;
 	public static final field Q Lnet/plumt/qr/ErrorCorrection;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getMaxLogoRatio ()F
 	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/ErrorCorrection;
 	public static fun values ()[Lnet/plumt/qr/ErrorCorrection;
 }
@@ -187,6 +259,16 @@ public final class net/plumt/qr/EventTime$Utc : net/plumt/qr/EventTime {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/plumt/qr/LogoQrCode {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClearedArea ()Lnet/plumt/qr/CellArea;
+	public final fun getErrorCorrection ()Lnet/plumt/qr/ErrorCorrection;
+	public final fun getLogoArea ()Lnet/plumt/qr/CellArea;
+	public final fun getMatrix ()Lnet/plumt/qr/CodeMatrix;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class net/plumt/qr/OtpAlgorithm : java/lang/Enum {
 	public static final field SHA1 Lnet/plumt/qr/OtpAlgorithm;
 	public static final field SHA256 Lnet/plumt/qr/OtpAlgorithm;
@@ -202,6 +284,27 @@ public final class net/plumt/qr/OtpType : java/lang/Enum {
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lnet/plumt/qr/OtpType;
 	public static fun values ()[Lnet/plumt/qr/OtpType;
+}
+
+public final class net/plumt/qr/ParseOptions {
+	public static final field Companion Lnet/plumt/qr/ParseOptions$Companion;
+	public static final field DEFAULT Lnet/plumt/qr/ParseOptions;
+	public static final field INFER_ALL Lnet/plumt/qr/ParseOptions;
+	public fun <init> ()V
+	public fun <init> (ZZ)V
+	public synthetic fun <init> (ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun copy (ZZ)Lnet/plumt/qr/ParseOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/ParseOptions;ZZILjava/lang/Object;)Lnet/plumt/qr/ParseOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInferEmail ()Z
+	public final fun getInferPhone ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/ParseOptions$Companion {
 }
 
 public final class net/plumt/qr/PhoneType : java/lang/Enum {
@@ -223,6 +326,14 @@ public final class net/plumt/qr/QrCode {
 	public static final fun encode (Lnet/plumt/qr/QrPayload;Lnet/plumt/qr/QrCodeOptions;)Lnet/plumt/qr/CodeMatrix;
 	public static synthetic fun encode$default (Ljava/lang/String;Lnet/plumt/qr/QrCodeOptions;ILjava/lang/Object;)Lnet/plumt/qr/CodeMatrix;
 	public static synthetic fun encode$default (Lnet/plumt/qr/QrPayload;Lnet/plumt/qr/QrCodeOptions;ILjava/lang/Object;)Lnet/plumt/qr/CodeMatrix;
+	public static final fun encodeWithLogo (Ljava/lang/String;)Lnet/plumt/qr/LogoQrCode;
+	public static final fun encodeWithLogo (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;)Lnet/plumt/qr/LogoQrCode;
+	public static final fun encodeWithLogo (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;Lnet/plumt/qr/QrCodeOptions;)Lnet/plumt/qr/LogoQrCode;
+	public static synthetic fun encodeWithLogo$default (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;Lnet/plumt/qr/QrCodeOptions;ILjava/lang/Object;)Lnet/plumt/qr/LogoQrCode;
+	public static final fun pickErrorCorrection (Ljava/lang/String;)Lnet/plumt/qr/ErrorCorrection;
+	public static final fun pickErrorCorrection (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;)Lnet/plumt/qr/ErrorCorrection;
+	public static final fun pickErrorCorrection (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;Lnet/plumt/qr/QrCodeOptions;)Lnet/plumt/qr/ErrorCorrection;
+	public static synthetic fun pickErrorCorrection$default (Ljava/lang/String;Lnet/plumt/qr/QrLogoOptions;Lnet/plumt/qr/QrCodeOptions;ILjava/lang/Object;)Lnet/plumt/qr/ErrorCorrection;
 }
 
 public final class net/plumt/qr/QrCodeException : java/lang/RuntimeException {
@@ -249,11 +360,50 @@ public final class net/plumt/qr/QrCodeOptions {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/plumt/qr/QrColors {
+	public static final field INSTANCE Lnet/plumt/qr/QrColors;
+	public static final field MIN_CONTRAST D
+	public static final field RECOMMENDED_CONTRAST D
+	public static final fun contrastRatio (II)D
+	public static final fun isInverted (II)Z
+	public static final fun readability (II)Lnet/plumt/qr/ColorReadability;
+	public static final fun relativeLuminance (I)D
+}
+
+public final class net/plumt/qr/QrContentTooLongException : java/lang/IllegalArgumentException {
+	public final fun getErrorCorrection ()Lnet/plumt/qr/ErrorCorrection;
+	public final fun getWithLogo ()Z
+}
+
+public final class net/plumt/qr/QrLogoOptions {
+	public static final field Companion Lnet/plumt/qr/QrLogoOptions$Companion;
+	public static final field MAX_PADDING I
+	public static final field MAX_SIZE_RATIO F
+	public fun <init> ()V
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()I
+	public final fun copy (FI)Lnet/plumt/qr/QrLogoOptions;
+	public static synthetic fun copy$default (Lnet/plumt/qr/QrLogoOptions;FIILjava/lang/Object;)Lnet/plumt/qr/QrLogoOptions;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPaddingModules ()I
+	public final fun getSizeRatio ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/QrLogoOptions$Companion {
+}
+
 public abstract interface class net/plumt/qr/QrPayload {
 	public static final field Companion Lnet/plumt/qr/QrPayload$Companion;
+	public static final field MAX_PARSE_LENGTH I
 	public abstract fun encode ()Ljava/lang/String;
 	public static fun parse (Ljava/lang/String;)Lnet/plumt/qr/QrPayload;
 	public static fun parse (Ljava/lang/String;Lnet/plumt/qr/CodeFormat;)Lnet/plumt/qr/QrPayload;
+	public static fun parse (Ljava/lang/String;Lnet/plumt/qr/CodeFormat;Lnet/plumt/qr/ParseOptions;)Lnet/plumt/qr/QrPayload;
+	public static fun parse (Ljava/lang/String;Lnet/plumt/qr/ParseOptions;)Lnet/plumt/qr/QrPayload;
 	public static fun summarize (Ljava/lang/String;)Ljava/lang/String;
 	public static fun summarize (Ljava/lang/String;Ljava/time/ZoneId;)Ljava/lang/String;
 	public abstract fun summary (Ljava/time/ZoneId;)Ljava/lang/String;
@@ -261,8 +411,11 @@ public abstract interface class net/plumt/qr/QrPayload {
 }
 
 public final class net/plumt/qr/QrPayload$Companion {
+	public static final field MAX_PARSE_LENGTH I
 	public final fun parse (Ljava/lang/String;)Lnet/plumt/qr/QrPayload;
 	public final fun parse (Ljava/lang/String;Lnet/plumt/qr/CodeFormat;)Lnet/plumt/qr/QrPayload;
+	public final fun parse (Ljava/lang/String;Lnet/plumt/qr/CodeFormat;Lnet/plumt/qr/ParseOptions;)Lnet/plumt/qr/QrPayload;
+	public final fun parse (Ljava/lang/String;Lnet/plumt/qr/ParseOptions;)Lnet/plumt/qr/QrPayload;
 	public final fun summarize (Ljava/lang/String;)Ljava/lang/String;
 	public final fun summarize (Ljava/lang/String;Ljava/time/ZoneId;)Ljava/lang/String;
 	public static synthetic fun summarize$default (Lnet/plumt/qr/QrPayload$Companion;Ljava/lang/String;Ljava/time/ZoneId;ILjava/lang/Object;)Ljava/lang/String;

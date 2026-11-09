@@ -19,6 +19,38 @@ class EncodeReadRoundTripTest {
     private fun read(m: CodeMatrix, options: ReadOptions = ReadOptions()): ScanResult? =
         CodeReader.read(luminanceFast(m), m.width, m.height, options = options)
 
+    /** 격자를 시계 방향으로 90도 돌린 밝기 배열(막대가 행과 나란히 눕는다). 크기는 (height x width). */
+    private fun rotatedLuminance(m: CodeMatrix): ByteArray {
+        val out = ByteArray(m.width * m.height)
+        for (y in 0 until m.height) for (x in 0 until m.width) out[x * m.height + (m.height - 1 - y)] = if (m[x, y]) 0 else -1
+        return out
+    }
+
+    @Test
+    fun `tryHarder 는 90도 돌아간 1차원 바코드도 읽고 점은 받은 이미지 좌표다`() {
+        val m = Barcode.encode("4006381333931", CodeFormat.EAN_13, BarcodeOptions(300, 100))
+        val turned = rotatedLuminance(m)
+        val w = m.height
+        val h = m.width
+        // 행만 훑으면 막대를 가로지르지 못한다
+        assertNull(CodeReader.read(turned, w, h, options = ReadOptions(formats = CodeFormat.PRODUCT)))
+        val r = CodeReader.read(turned, w, h, options = ReadOptions(formats = CodeFormat.PRODUCT, tryHarder = true))
+        assertEquals("4006381333931", r?.text)
+        // 돌려 읽은 점도 받은 이미지(w x h) 좌표다 — 세로로 선 바코드의 위아래 끝
+        r!!.points.forEach { assertTrue("$it", it.x in 0f..w.toFloat() && it.y in 0f..h.toFloat()) }
+        assertTrue(r.points.maxOf { it.y } - r.points.minOf { it.y } > h / 2f)
+        val all = CodeReader.readAll(turned, w, h, options = ReadOptions(formats = CodeFormat.PRODUCT, tryHarder = true))
+        assertEquals(listOf("4006381333931"), all.map { it.text })
+        // ARGB 경로도 같다
+        val argb = IntArray(turned.size) { if (turned[it] == 0.toByte()) CodeMatrix.BLACK else CodeMatrix.WHITE }
+        assertEquals("4006381333931", CodeReader.read(argb, w, h, ReadOptions(formats = CodeFormat.PRODUCT, tryHarder = true))?.text)
+        // 행 간격이 있는 버퍼도 돌린다
+        val stride = w + 7
+        val padded = ByteArray(stride * h) { -1 }
+        for (y in 0 until h) System.arraycopy(turned, y * w, padded, y * stride, w)
+        assertEquals("4006381333931", CodeReader.read(padded, w, h, stride, ReadOptions(formats = CodeFormat.PRODUCT, tryHarder = true))?.text)
+    }
+
     @Test
     fun `QR 을 만들고 읽는다 — 한글·이모지 포함`() {
         listOf("https://example.com", "안녕하세요 QR 😀", "A".repeat(500), "1234567890").forEach { text ->
