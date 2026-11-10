@@ -6,7 +6,7 @@
 
 ### [Unreleased]
 
-### [0.0.2] - 미발행
+### [0.0.2] - 2026-11-10
 
 #### 추가
 - `QrCode.pickErrorCorrection(text, logo?, options)` — H → Q → M → L 중 내용이 들어가는 가장 높은 오류 정정 단계. 로고를 주면 로고 자리를 허용하는 단계만 본다
@@ -60,7 +60,7 @@
 
 ### [Unreleased]
 
-### [0.0.2] - 미발행
+### [0.0.2] - 2026-11-10
 
 #### 추가
 - `FrameListener`(`onFrame(frame, detections)`) · `CodeScanner(onFrame = …)` · `ScannerState.setFrameListener` — 스캐너가 분석한 프레임을 앱도 받는다.
