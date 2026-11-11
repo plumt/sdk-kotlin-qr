@@ -135,7 +135,7 @@ class ScanPipelineTest {
 
     @Test
     fun multi_returnsAllVisibleWithViewCoordinates() {
-        val p = ScanPipeline(ScanMode.Multi, options())
+        val p = ScanPipeline(ScanMode.Multi(), options())
         val s = p.process(listOf(det("A", 10f, 20f, 50f, 60f), det("B", 300f, 300f, 340f, 340f)), IW, IH, VW, VH, 0)
         assertEquals(listOf("A", "B"), s.codes.map { it.result.text })
         assertEquals(box(20f, 40f, 100f, 120f), s.codes[0].bounds)
@@ -146,7 +146,7 @@ class ScanPipelineTest {
 
     @Test
     fun frontLens_mirrorsBoxes() {
-        val p = ScanPipeline(ScanMode.Multi, options(lens = CameraLens.FRONT))
+        val p = ScanPipeline(ScanMode.Multi(), options(lens = CameraLens.FRONT))
         val s = p.process(listOf(det("A", 10f, 20f, 50f, 60f)), IW, IH, VW, VH, 0)
         assertEquals(box(860f, 40f, 940f, 120f), s.codes.single().bounds)
     }
@@ -155,9 +155,9 @@ class ScanPipelineTest {
     fun fill_cropsOffscreenCodes_fitKeepsThem() {
         // 뷰 1080x1920 에서 FILL 은 좌우 180px 씩 잘린다 — 이미지 x=20 근처 코드(뷰 x≈-120)는 보이지 않는다
         val d = listOf(det("EDGE", 0f, 300f, 40f, 340f), det("MID", 220f, 300f, 260f, 340f))
-        val fill = ScanPipeline(ScanMode.Multi, options(scale = PreviewScaleMode.FILL)).process(d, IW, IH, 1080f, 1920f, 0)
+        val fill = ScanPipeline(ScanMode.Multi(), options(scale = PreviewScaleMode.FILL)).process(d, IW, IH, 1080f, 1920f, 0)
         assertEquals(listOf("MID"), fill.codes.map { it.result.text })
-        val fit = ScanPipeline(ScanMode.Multi, options(scale = PreviewScaleMode.FIT)).process(d, IW, IH, 1080f, 1920f, 0)
+        val fit = ScanPipeline(ScanMode.Multi(), options(scale = PreviewScaleMode.FIT)).process(d, IW, IH, 1080f, 1920f, 0)
         assertEquals(listOf("EDGE", "MID"), fit.codes.map { it.result.text })
     }
 
@@ -223,7 +223,7 @@ class ScanPipelineTest {
 
     @Test
     fun multi_neverAutoDelivers() {
-        val p = ScanPipeline(ScanMode.Multi, options())
+        val p = ScanPipeline(ScanMode.Multi(), options())
         assertNull(p.process(listOf(detAt("A", 240f, 320f)), IW, IH, VW, VH, ms(5000)).deliver)
     }
 
@@ -243,7 +243,7 @@ class ScanPipelineTest {
 
     @Test
     fun staleCodesAreReportedWithMissedFrames() {
-        val p = ScanPipeline(ScanMode.Multi, options())
+        val p = ScanPipeline(ScanMode.Multi(), options())
         p.process(listOf(detAt("A", 240f, 320f)), IW, IH, VW, VH, 0)
         val s = p.process(emptyList(), IW, IH, VW, VH, 0)
         assertEquals(1, s.codes.single().missedFrames)

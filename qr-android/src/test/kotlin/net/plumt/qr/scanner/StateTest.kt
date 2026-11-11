@@ -158,7 +158,7 @@ class ScannerStateTest {
 
     @Test
     fun codeAt_picksContainingNearestCenter() {
-        val s = state(ScanMode.Multi)
+        val s = state(ScanMode.Multi())
         val big = tracked(1, box(0f, 0f, 100f, 100f))
         val small = tracked(2, box(50f, 40f, 70f, 60f))
         s.onSnapshot(ScanSnapshot(listOf(big, small), null, null))
@@ -212,7 +212,7 @@ class ScannerStateTest {
 
     @Test
     fun newAnalyzer_wiresStateAndClosesPrevious() {
-        val s = state(ScanMode.Multi)
+        val s = state(ScanMode.Multi())
         s.onViewSize(480f, 640f)
         val e1 = FakeEngine { listOf(detAt("A", 100f, 100f)) }
         val a1 = s.newAnalyzer(e1)
@@ -279,8 +279,8 @@ class ScannerStateTest {
     @Test
     fun exposesModeAndOptions() {
         val o = ScannerOptions(engine = ScanEngines.zxing(), lens = CameraLens.FRONT)
-        val s = state(ScanMode.Multi, o)
-        assertSame(ScanMode.Multi, s.mode)
+        val s = state(ScanMode.Multi(), o)
+        assertEquals(ScanMode.Multi(), s.mode)
         assertSame(o, s.options)
     }
 }

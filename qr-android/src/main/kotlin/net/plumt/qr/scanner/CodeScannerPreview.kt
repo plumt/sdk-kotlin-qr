@@ -30,6 +30,13 @@ private object EngineKeyPlaceholder : ScanEngine.Factory {
         throw UnsupportedOperationException("자리표시 엔진이다")
 }
 
+/** 상태 키에서 [MultiLock.Custom] 의 함수를 뺄 때 쓰는 자리표시. */
+private val CustomLockKeyPlaceholder: (List<TrackedCode>) -> TrackedCode? = { null }
+
+/** 상태 키 — [MultiLock.Custom] 의 함수만 다른 모드는 같은 키다. */
+internal fun ScanMode.rememberKey(): ScanMode =
+    if (this is ScanMode.Multi && lock is MultiLock.Custom) ScanMode.Multi(MultiLock.Custom(CustomLockKeyPlaceholder), autoDeliver) else this
+
 /**
  * 스캐너 상태를 만든다. [mode]·[options] 가 바뀌면 새 상태가 된다(카메라 세션도 새로 연다).
  * 권한은 앱의 `CAMERA` 권한을 그대로 읽는다 — SDK 는 요청하지 않는다.
@@ -38,17 +45,21 @@ private object EngineKeyPlaceholder : ScanEngine.Factory {
  *   [CameraStatus.PermissionRequired] 에서 벗어난다
  * - 엔진 팩토리([ScannerOptions.engine])만 다른 설정은 같은 상태로 본다 — 값을 캡처한 람다를 인라인으로 넘겨도 재구성마다
  *   카메라가 다시 열리지 않는다. 새 팩토리는 다음 카메라 세션부터 쓴다
+ * - [MultiLock.Custom] 의 함수만 다른 모드도 같은 상태로 본다. 새 함수는 다음 프레임부터 쓴다
  */
 @Composable
 public fun rememberScannerState(mode: ScanMode, options: ScannerOptions = ScannerOptions()): ScannerState {
     val context = LocalContext.current.applicationContext
     val owner = LocalLifecycleOwner.current
-    val state = remember(mode, options.copy(engine = EngineKeyPlaceholder)) {
+    val state = remember(mode.rememberKey(), options.copy(engine = EngineKeyPlaceholder)) {
         ScannerState(mode, options) {
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
         }
     }
-    SideEffect { if (state.options.engine !== options.engine) state.updateEngine(options) }
+    SideEffect {
+        if (state.options.engine !== options.engine) state.updateEngine(options)
+        if (state.mode != mode) state.updateMode(mode)
+    }
     DisposableEffect(owner, state) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) state.refreshPermission()

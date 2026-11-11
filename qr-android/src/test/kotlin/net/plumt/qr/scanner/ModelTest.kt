@@ -76,7 +76,10 @@ class OptionsTest {
         assertFalse(ScanMode.Single().autoDeliver)
         assertTrue(ScanMode.Single(autoDeliver = true).autoDeliver)
         assertEquals(ScanMode.Single(true), ScanMode.Single(true))
-        assertEquals("Multi", ScanMode.Multi.toString())
+        assertEquals("Multi(lock=None, autoDeliver=false)", ScanMode.Multi().toString())
+        assertEquals(ScanMode.Multi(), ScanMode.Multi())
+        assertEquals(ScanMode.Multi(MultiLock.Tap, autoDeliver = true), ScanMode.Multi(MultiLock.Tap, true))
+        assertFalse(ScanMode.Multi() == ScanMode.Multi(MultiLock.Nearest))
         assertTrue(CameraLens.FRONT.ordinal > CameraLens.BACK.ordinal)
     }
 }

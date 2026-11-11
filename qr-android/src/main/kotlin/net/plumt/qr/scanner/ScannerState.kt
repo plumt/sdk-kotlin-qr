@@ -26,11 +26,17 @@ private const val DELIVERY_BUFFER = 8
  * 테스트 대역: 내부 생성자가 권한 확인 함수를 받는다 — 공개 생성은 [rememberScannerState] 뿐이다.
  */
 public class ScannerState internal constructor(
-    /** 고르는 방식. */
-    public val mode: ScanMode,
+    mode: ScanMode,
     options: ScannerOptions,
     private val permissionGranted: () -> Boolean,
 ) {
+    /**
+     * 고르는 방식. [rememberScannerState] 가 [MultiLock.Custom] 의 함수만 다른 모드를 받으면 상태를 새로 만들지 않고 이 값만 바꾼다.
+     */
+    @Volatile
+    public var mode: ScanMode = mode
+        private set
+
     /**
      * 설정. [rememberScannerState] 가 엔진 팩토리만 다른 설정을 받으면 상태를 새로 만들지 않고 이 값만 바꾼다 —
      * 새 엔진은 다음 카메라 세션부터 쓴다.
@@ -51,7 +57,7 @@ public class ScannerState internal constructor(
     /** 보이는 코드 전부(추적 번호 순). [ScanMode.Single] 에서도 고정되지 않은 코드가 들어 있다(흐리게 그릴 때 쓴다). */
     public val codes: StateFlow<List<TrackedCode>> = _codes.asStateFlow()
 
-    /** [ScanMode.Single] 에서 고정된 코드. 없거나 [ScanMode.Multi] 면 null. */
+    /** 고정(lock-on)된 코드. [codes] 중 `isLocked` 인 것과 같다. 없으면 null. [ScanMode.Multi] 는 [MultiLock] 정책·[lockOn] 으로 고정된다. */
     public val lockedCode: StateFlow<TrackedCode?> = _locked.asStateFlow()
 
     /** 카메라 상태. 권한이 없으면 [CameraStatus.PermissionRequired]. */
@@ -70,7 +76,7 @@ public class ScannerState internal constructor(
     public val error: StateFlow<ScannerException?> = _error.asStateFlow()
 
     /**
-     * 자동 넘기기([ScanMode.Single.autoDeliver])로 넘긴 결과. 구독자가 없을 때 넘긴 것은 버린다(나중에 다시 내지 않는다).
+     * 자동 넘기기([ScanMode.Single.autoDeliver]·[ScanMode.Multi.autoDeliver])로 넘긴 결과. 구독자가 없을 때 넘긴 것은 버린다(나중에 다시 내지 않는다).
      * 구독자가 느리면 최근 8개까지 쌓고 오래된 것부터 버린다.
      * [CodeScanner] 는 이것을 `onCodeTap` 으로 넘긴다.
      */
@@ -208,6 +214,44 @@ public class ScannerState internal constructor(
         _codes.value.filter { it.bounds.contains(x, y) }
             .minByOrNull { BoxMath.distance(it.bounds.centerX, it.bounds.centerY, x, y) }
 
+    /**
+     * 추적 번호 [id] 의 코드에 고정한다. 모드·[MultiLock] 정책보다 우선하고, 그 코드가 화면에서 사라지면(추적에서 지워지거나 화면 밖)
+     * 풀린 뒤 정책대로 다시 고른다. [codes]·[lockedCode] 는 바로 바뀐다. 메인 스레드에서 부른다.
+     *
+     * 고정된 코드는 자동 넘기기가 켜져 있으면 규칙대로 넘긴다 — 같은 추적 번호는 한 번만 넘기므로 풀었다 다시 고정해도 다시 넘기지 않는다.
+     * @return [codes] 에 그 번호가 있어 고정했으면 true. 없거나 멈춘 상태면 false
+     */
+    public fun lockOn(id: Long): Boolean = synchronized(pipeline) {
+        if (_paused.value) return false
+        val now = _codes.value
+        if (now.none { it.id == id }) return false
+        pipeline.pin(id)
+        publishLock(now, id)
+        true
+    }
+
+    /**
+     * 고정을 푼다([lockOn] 고정과 정책 고정 모두). [codes]·[lockedCode] 는 바로 바뀐다. 메인 스레드에서 부른다.
+     * 스스로 고르는 정책([ScanMode.Single]·[MultiLock.Nearest]·[MultiLock.Custom])은 다음 프레임에 다시 고른다 —
+     * 고정 없이 두려면 [MultiLock.None]·[MultiLock.Tap] 을 쓴다.
+     * @return 고정된 코드가 있었으면 true
+     */
+    public fun unlock(): Boolean = synchronized(pipeline) {
+        val had = _locked.value != null
+        pipeline.release()
+        publishLock(_codes.value, null)
+        had
+    }
+
+    private fun publishLock(now: List<TrackedCode>, id: Long?) {
+        val codes = now.map {
+            val locked = it.id == id
+            if (it.isLocked == locked) it else TrackedCode(it.id, it.result, it.bounds, it.missedFrames, locked)
+        }
+        _codes.value = codes
+        _locked.value = codes.firstOrNull { it.isLocked }
+    }
+
     // ---- 내부: 카메라 바인더·미리보기가 부른다 ----
 
     @Volatile
@@ -217,6 +261,13 @@ public class ScannerState internal constructor(
     internal fun updateEngine(newOptions: ScannerOptions) {
         require(newOptions.copy(engine = options.engine) == options) { "엔진 밖의 설정이 바뀌면 상태를 새로 만든다" }
         options = newOptions
+    }
+
+    /** [MultiLock.Custom] 의 함수만 바뀐 모드로 바꾼다(다음 프레임부터 쓴다). 그 밖의 값이 다르면 [IllegalArgumentException]. */
+    internal fun updateMode(newMode: ScanMode) {
+        require(newMode.rememberKey() == mode.rememberKey()) { "고정 선택 함수 밖의 모드가 바뀌면 상태를 새로 만든다" }
+        mode = newMode
+        pipeline.mode = newMode
     }
 
     internal fun onViewSize(width: Float, height: Float) {

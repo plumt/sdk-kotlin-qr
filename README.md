@@ -7,7 +7,7 @@ QR·바코드를 만들고 읽고, 그 안의 내용(Wi-Fi·연락처·일정·O
 | 모듈 | 좌표 | 상태 | 내용 |
 |---|---|---|---|
 | `qr` | `net.plumt.qr:qr` | 0.0.2 미발행 | 만들기·읽기·내용 해석(jar) |
-| `qr-android` | `net.plumt.qr:qr-android` | 0.0.2 미발행 | 실시간 카메라 스캐너 Compose 컴포넌트·내용별 실행(aar). `qr` 을 함께 가져온다 |
+| `qr-android` | `net.plumt.qr:qr-android` | 0.1.0 미발행 | 실시간 카메라 스캐너 Compose 컴포넌트·내용별 실행(aar). `qr` 을 함께 가져온다 |
 
 ## qr
 
@@ -182,7 +182,7 @@ CameraX 미리보기 위에 코드 박스와 칩(종류 + 한 줄 요약)을 그
 
 ```kotlin
 dependencies {
-    implementation("net.plumt.qr:qr-android:0.0.2")
+    implementation("net.plumt.qr:qr-android:0.1.0")
 }
 ```
 
@@ -208,9 +208,74 @@ CodeScanner(
 |---|---|
 | `ScanMode.Single()` | 미리보기 가운데에 가장 가까운 코드에 고정한다. 더 가까운 코드가 생겨도 `LockOptions.hysteresis`(대각선 비율) 이상 가깝고 `switchFrames` 프레임 연속일 때만 옮긴다 — 코드 둘 사이에서 깜빡이지 않는다. 고정된 코드의 칩만 띄운다 |
 | `ScanMode.Single(autoDeliver = true)` | 탭 없이 넘긴다. 고정이 `AutoDeliverOptions.stableMillis`(기본 300ms) 유지돼야 넘기고, 같은 추적 번호는 한 번, 같은 원문은 `repeatWindowMillis`(기본 2초) 안에 다시 넘기지 않는다 |
-| `ScanMode.Multi` | 보이는 코드를 모두 추적한다(프레임 사이 같은 번호, 위치 평활, `maxMissedFrames` 넘게 놓치면 지움). 코드마다 칩, 탭한 것을 넘긴다 |
+| `ScanMode.Multi()` | 보이는 코드를 모두 추적한다(프레임 사이 같은 번호, 위치 평활, `maxMissedFrames` 넘게 놓치면 지움). 코드마다 칩, 탭한 것을 넘긴다. 고정하지 않는다 |
+| `ScanMode.Multi(lock, autoDeliver)` | 모두 추적하면서 하나에 고정한다(아래 「멀티 고정 정책」). `autoDeliver = true` 면 고정된 코드를 `Single` 과 같은 규칙으로 탭 없이 넘긴다 |
 
 칩의 요약은 `QrPayload.summary` 다 — Wi-Fi 비밀번호·OTP 비밀은 화면에 나오지 않는다.
+
+### 오버레이 바꾸기·숨기기
+
+박스(`box`)와 칩(`chip`)은 따로 고른다 — 기본·숨김(`null`)·직접 그리기. 박스를 숨겨도 코드 자리 탭은 그대로 판정한다.
+
+```kotlin
+// 카메라만 — 오버레이 없이 가운데 코드를 탭 없이 넘긴다
+CodeScanner(
+    mode = ScanMode.Single(autoDeliver = true),
+    onCodeTap = { result -> onScanned(result) },
+    box = null,
+    chip = null,
+)
+
+// 기본 박스의 색·두께·모서리만 바꾼다
+CodeScanner(
+    mode = ScanMode.Multi(),
+    onCodeTap = { … },
+    box = { code, dimmed ->
+        QrCodeBox(code, dimmed, style = ScannerDefaults.boxStyle(lockedColor = Color.Green, lockedStrokeWidth = 4.dp, cornerRadius = 12.dp))
+    },
+)
+
+// 직접 그리기 — 박스 슬롯은 코드 자리에 그 크기로 놓인다. 칩 슬롯은 박스 아래(모자라면 위)에 놓인다
+CodeScanner(
+    mode = ScanMode.Multi(MultiLock.Tap),
+    onCodeTap = { … },
+    box = { code, _ -> Box(Modifier.fillMaxSize().border(2.dp, if (code.isLocked) Color.Yellow else Color.White, CircleShape)) },
+    chip = { code, onClick -> if (code.isLocked) AssistChip(onClick = onClick, label = { Text(ScannerDefaults.summary(code.result)) }) },
+)
+```
+
+| 슬롯·인자 | 기본 | 뜻 |
+|---|---|---|
+| `box: (@Composable (code, dimmed) -> Unit)?` | `QrCodeBox(code, dimmed)` | 보이는 코드마다. `dimmed` 는 기본 박스가 흐리게 그릴 코드인가(`Single` 의 고정 안 된 코드, `Multi` 에서 다른 코드가 고정됐을 때). `null` 이면 그리지 않는다. 탭을 받는 컴포넌트를 그리면 그 자리 탭은 스캐너가 받지 않는다 |
+| `chip: (@Composable (code, onClick) -> Unit)?` | `QrCodeChip` | `Single` 은 고정된 코드에만, `Multi` 는 보이는 코드마다. `onClick` 이 그 코드를 넘긴다. `null` 이면 그리지 않는다 |
+| `tapToDeliver` | `true` | `false` 면 박스 자리·칩 탭이 넘기지 않는다(자동 넘기기만). `MultiLock.Tap` 의 탭 고정은 그대로다 |
+| `ScannerDefaults.boxStyle(...)` | 보통·고정 `primary` 3dp, 흐림 반투명 흰색 2dp, 모서리 8dp | `CodeBoxStyle` — `color`·`lockedColor`·`dimmedColor`·`strokeWidth`·`lockedStrokeWidth`·`dimmedStrokeWidth`·`cornerRadius` |
+
+### 멀티 고정 정책 — `MultiLock`
+
+```kotlin
+CodeScanner(mode = ScanMode.Multi(MultiLock.Tap, autoDeliver = true), onCodeTap = { … })   // 탭한 코드에 고정, 잠시 머물면 넘긴다
+CodeScanner(mode = ScanMode.Multi(MultiLock.Nearest), onCodeTap = { … })                   // 가운데 코드에 고정, 칩은 모두
+CodeScanner(
+    mode = ScanMode.Multi(MultiLock.Custom { codes -> codes.firstOrNull { it.result.payload is QrPayload.Url } }),
+    onCodeTap = { … },
+)
+
+// 앱이 직접 — 어느 모드·정책이든 lockOn 이 우선한다
+val state = rememberScannerState(ScanMode.Multi())
+state.lockOn(code.id)   // 그 코드가 사라지면 풀리고 정책대로 다시 고른다
+state.unlock()
+```
+
+| 정책 | 고정 |
+|---|---|
+| `MultiLock.None` (기본) | 하지 않는다. `lockOn` 으로만 |
+| `MultiLock.Tap` | 코드 박스 자리를 탭하면 그 코드로 옮기고, 고정된 코드를 다시 탭하면 푼다. 박스 자리 탭은 넘기지 않는다 — 칩 탭이나 `autoDeliver` 로 넘긴다 |
+| `MultiLock.Nearest` | 가운데에 가장 가까운 코드. `Single` 과 같은 규칙(`LockOptions` 의 히스테리시스·`switchFrames`) |
+| `MultiLock.Custom(select)` | 앱 함수가 프레임마다(분석 스레드) 보이는 코드 중 하나를 고른다. `isLocked` 는 직전 고정, null 이면 고정 없음. 던지면 그 프레임을 버리고 `onError` 로 한 번 알린다. 인라인 람다여도 상태를 새로 만들지 않는다 |
+
+고정된 코드는 `TrackedCode.isLocked`·`ScannerState.lockedCode` 로 보인다(`Multi` 에서도). 고정된 코드가 화면에서 사라지면(추적에서 지워지거나 화면 밖)
+고정이 풀린다. `unlock()` 뒤 스스로 고르는 정책(`Single`·`Nearest`·`Custom`)은 다음 프레임에 다시 고른다.
 
 ### 넘겨받은 결과 실행하기 — `QrActionExecutor`
 
@@ -310,7 +375,7 @@ val withLogo = QrBitmaps.render(QrCode.encodeWithLogo(text), 768, logo = logoBit
 ### 직접 그리기 — `ScannerState`
 
 ```kotlin
-val state = rememberScannerState(ScanMode.Multi, ScannerOptions(formats = CodeFormat.ALL))
+val state = rememberScannerState(ScanMode.Multi(), ScannerOptions(formats = CodeFormat.ALL))
 Box {
     CodeScannerPreview(state, Modifier.fillMaxSize())      // 미리보기와 카메라 수명만
     val codes by state.codes.collectAsState()            // 뷰 좌표의 박스, 추적 번호, 고정 여부
@@ -322,11 +387,11 @@ if (state.cameraStatus.value is CameraStatus.Error) state.retry()   // 일시적
 
 `rememberScannerState` 는 `mode`·`options` 가 바뀌면 새 상태(새 카메라 세션)를 만든다. 단 엔진 팩토리(`engine`)만 다르면 같은 상태다 —
 `ScannerOptions(engine = { ctx, f -> MyEngine(ctx, threshold) })` 처럼 람다를 인라인으로 넘겨도 재구성마다 카메라가 다시 열리지 않고,
-새 팩토리는 다음 카메라 세션부터 쓴다. 그 밖의 값은 재구성마다 같은 값이면 된다(`data class` 라 값으로 비교한다).
+새 팩토리는 다음 카메라 세션부터 쓴다. `MultiLock.Custom` 의 함수만 다른 모드도 같은 상태다(새 함수는 다음 프레임부터). 그 밖의 값은 재구성마다 같은 값이면 된다(`data class` 라 값으로 비교한다).
 `setPaused(false)` 로 재개하면 추적·고정은 새로 쌓고, 자동 넘기기의 같은 원문 반복 창은 이어진다 — 넘기기 → 멈춤 → 결과 창 닫기 → 재개에서
 화면에 남은 같은 코드를 곧바로 다시 넘기지 않는다.
 
-`CodeScanner` 에 같은 `state` 를 넘기면 기본 오버레이를 쓰면서 플래시·확대를 밖에서 조작할 수 있다. 칩 모양만 바꾸려면 `chip` 슬롯을 준다.
+`CodeScanner` 에 같은 `state` 를 넘기면 기본 오버레이를 쓰면서 플래시·확대·고정을 밖에서 조작할 수 있다. 박스·칩만 바꾸려면 슬롯을 준다(위 「오버레이 바꾸기·숨기기」).
 
 ### 설정 — `ScannerOptions`
 
@@ -354,7 +419,7 @@ ZXing 박스는 근사다. ZXing 은 네 모서리를 주지 않고 QR 이면 �
 ZXing 만 쓰는 앱은 ML Kit 을 빼도 된다 — `ScanEngines.mlKit()` 를 부르지 않는 한 ML Kit 클래스를 읽지 않는다.
 
 ```kotlin
-implementation("net.plumt.qr:qr-android:0.0.2") { exclude(group = "com.google.mlkit") }
+implementation("net.plumt.qr:qr-android:0.1.0") { exclude(group = "com.google.mlkit") }
 CodeScanner(..., options = ScannerOptions(engine = ScanEngines.zxing()))
 ```
 

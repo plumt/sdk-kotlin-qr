@@ -110,6 +110,22 @@ public final class net/plumt/qr/scanner/CodeBounds {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class net/plumt/qr/scanner/CodeBoxStyle {
+	public static final field $stable I
+	public synthetic fun <init> (JJJFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJJFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor-0d7_KjU ()J
+	public final fun getCornerRadius-D9Ej5fM ()F
+	public final fun getDimmedColor-0d7_KjU ()J
+	public final fun getDimmedStrokeWidth-D9Ej5fM ()F
+	public final fun getLockedColor-0d7_KjU ()J
+	public final fun getLockedStrokeWidth-D9Ej5fM ()F
+	public final fun getStrokeWidth-D9Ej5fM ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class net/plumt/qr/scanner/CodeScannerPreviewKt {
 	public static final fun CodeScannerPreview (Lnet/plumt/qr/scanner/ScannerState;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberScannerState (Lnet/plumt/qr/scanner/ScanMode;Lnet/plumt/qr/scanner/ScannerOptions;Landroidx/compose/runtime/Composer;II)Lnet/plumt/qr/scanner/ScannerState;
@@ -145,6 +161,42 @@ public final class net/plumt/qr/scanner/LockOptions {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHysteresis ()F
 	public final fun getSwitchFrames ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class net/plumt/qr/scanner/MultiLock {
+}
+
+public final class net/plumt/qr/scanner/MultiLock$Custom : net/plumt/qr/scanner/MultiLock {
+	public static final field $stable I
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSelect ()Lkotlin/jvm/functions/Function1;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/MultiLock$Nearest : net/plumt/qr/scanner/MultiLock {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/MultiLock$Nearest;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/MultiLock$None : net/plumt/qr/scanner/MultiLock {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/MultiLock$None;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class net/plumt/qr/scanner/MultiLock$Tap : net/plumt/qr/scanner/MultiLock {
+	public static final field $stable I
+	public static final field INSTANCE Lnet/plumt/qr/scanner/MultiLock$Tap;
+	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -209,8 +261,12 @@ public abstract interface class net/plumt/qr/scanner/ScanMode {
 
 public final class net/plumt/qr/scanner/ScanMode$Multi : net/plumt/qr/scanner/ScanMode {
 	public static final field $stable I
-	public static final field INSTANCE Lnet/plumt/qr/scanner/ScanMode$Multi;
+	public fun <init> ()V
+	public fun <init> (Lnet/plumt/qr/scanner/MultiLock;Z)V
+	public synthetic fun <init> (Lnet/plumt/qr/scanner/MultiLock;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAutoDeliver ()Z
+	public final fun getLock ()Lnet/plumt/qr/scanner/MultiLock;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -230,7 +286,8 @@ public final class net/plumt/qr/scanner/ScanMode$Single : net/plumt/qr/scanner/S
 }
 
 public final class net/plumt/qr/scanner/ScannerComposablesKt {
-	public static final fun CodeScanner (Lnet/plumt/qr/scanner/ScanMode;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/ScannerOptions;Lnet/plumt/qr/scanner/ScannerState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lnet/plumt/qr/scanner/FrameListener;Lkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CodeScanner (Lnet/plumt/qr/scanner/ScanMode;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/ScannerOptions;Lnet/plumt/qr/scanner/ScannerState;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lnet/plumt/qr/scanner/FrameListener;Lkotlin/jvm/functions/Function4;ZLkotlin/jvm/functions/Function4;Landroidx/compose/runtime/Composer;III)V
+	public static final fun QrCodeBox (Lnet/plumt/qr/scanner/TrackedCode;ZLandroidx/compose/ui/Modifier;Lnet/plumt/qr/scanner/CodeBoxStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun QrCodeChip (Lnet/plumt/qr/scanner/TrackedCode;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;Ljava/time/ZoneId;Landroidx/compose/runtime/Composer;II)V
 }
 
@@ -242,6 +299,11 @@ public final class net/plumt/qr/scanner/ScannerDefaults {
 	public static final fun actionDetail (Lnet/plumt/qr/scanner/action/QrAction;Ljava/time/ZoneId;)Ljava/lang/String;
 	public static synthetic fun actionDetail$default (Lnet/plumt/qr/scanner/action/QrAction;Ljava/time/ZoneId;ILjava/lang/Object;)Ljava/lang/String;
 	public static final fun actionLabelRes (Lnet/plumt/qr/scanner/action/QrAction;)I
+	public final fun boxStyle-4urkdxo (JJJFFFFLandroidx/compose/runtime/Composer;II)Lnet/plumt/qr/scanner/CodeBoxStyle;
+	public final fun getBoxCornerRadius-D9Ej5fM ()F
+	public final fun getBoxStrokeWidth-D9Ej5fM ()F
+	public final fun getDimmedBoxColor-0d7_KjU ()J
+	public final fun getDimmedBoxStrokeWidth-D9Ej5fM ()F
 	public static final fun summary (Lnet/plumt/qr/ScanResult;)Ljava/lang/String;
 	public static final fun summary (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;)Ljava/lang/String;
 	public static final fun summary (Lnet/plumt/qr/ScanResult;Ljava/time/ZoneId;I)Ljava/lang/String;
@@ -306,12 +368,14 @@ public final class net/plumt/qr/scanner/ScannerState {
 	public final fun getTorch ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getZoom ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun isPaused ()Lkotlinx/coroutines/flow/StateFlow;
+	public final fun lockOn (J)Z
 	public final fun refreshPermission ()Z
 	public final fun retry ()Z
 	public final fun setFrameListener (Lnet/plumt/qr/scanner/FrameListener;)V
 	public final fun setPaused (Z)V
 	public final fun setTorchEnabled (Z)Z
 	public final fun setZoomRatio (F)Z
+	public final fun unlock ()Z
 	public final fun zoomBy (F)Z
 }
 

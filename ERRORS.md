@@ -101,6 +101,7 @@
 | `IllegalArgumentException` | `ScanFrame(...)` — 크기 1 미만, `rowStride < width`, 배열이 `rowStride*(height-1)+width` 보다 작음, 회전이 0·90·180·270 이 아님 | 프레임 정보를 그대로 넘긴다 |
 | `IllegalArgumentException` | `ScanEngine.Factory.create` 에 빈 형식 집합 | 형식을 준다 |
 | `IllegalArgumentException` | `ScannerDefaults.summary` 의 `maxLength` 가 1 미만 | 1 이상을 준다 |
+| `IllegalArgumentException` | `CodeBoxStyle`·`ScannerDefaults.boxStyle` 의 선 두께·모서리 반지름이 음수이거나 유한하지 않을 때 (생성 시) | 0 이상 유한한 값을 준다 |
 | `IllegalArgumentException` | `AppLinkPolicy.allow` 의 스킴이 문법(영문 시작, 영문·숫자·`+`·`.`·`-`)에 맞지 않거나 `FORBIDDEN_SCHEMES`(http·https·intent·javascript·file·content·data 등)일 때. `intent` 는 `allowIntentUri = true` 로 켠다 | 스킴 이름만(`://` 없이) 준다 |
 | `IllegalArgumentException` | `QrBitmaps.render` 의 크기·색이 `CodeImages`·`CodeColors` 의 조건을 어길 때, 로고·입력 비트맵이 재활용됐거나 `MAX_CELLS` 픽셀을 넘을 때 | 인자를 바로잡는다 |
 | `IllegalArgumentException` | `BitmapCodeReader.read` 에 빈 `formats`·재활용된 비트맵 | 형식을 주고, 읽는 동안 비트맵을 재활용하지 않는다 |
@@ -123,6 +124,7 @@
 | `CameraStatus.PermissionRequired` | 앱에 `CAMERA` 권한이 없다(실패가 아니다) | 앱이 권한을 요청한다. 허용하고 화면이 다시 보이면(ON_RESUME) 상태가 스스로 바뀐다 — 바로 반영하려면 `refreshPermission()` |
 | `CameraStatus.NoCamera` | 요청한 방향(`lens`)의 카메라가 기기에 없다 | 다른 렌즈를 고르거나 사진으로 읽기(`CodeReader`)를 제안한다. 외장 카메라를 붙였다면 `retry()` |
 | `CameraStatus.Error(ScannerException)` | 카메라 제공자를 얻지 못함·바인딩 실패(다른 앱이 카메라 점유 등)·엔진 생성 실패(ML Kit 의존이 빠졌는데 `mlKit()` 를 고름, 초기화 실패. release 에서만 나고 logcat 에 `ComponentDiscovery … Registrar … NoSuchMethodException` 이 있으면 앱의 R8 설정이 이 SDK 의 consumer 규칙을 빼고 있는지 본다) | 원인을 보고한다. 일시적 실패(점유)면 `ScannerState.retry()` 로 다시 연다. 엔진 문제면 `ScanEngines.zxing()` 으로 바꾼다. SDK 는 조용히 다른 엔진으로 바꾸지 않는다 |
+| `ScannerState.error`·`onError` | `MultiLock.Custom` 의 선택 함수가 런타임 예외를 던졌을 때 — 원인은 `cause`. 그 프레임의 결과(코드·고정·자동 넘김)를 버리고 다음 프레임을 본다. 엔진 오류와 합쳐 카메라 세션마다 처음 한 건만 온다 | 선택 함수를 고친다 |
 | `ScannerState.error`·`onError` | 엔진이 프레임을 처리하다 실패(ML Kit 이 2초 안에 끝내지 못한 것 포함) — 카메라 세션마다 처음 한 건만 온다(같은 원인이 프레임마다 반복되므로). 그 프레임은 건너뛰고 다음 프레임을 본다 | 보고한다. 계속 실패하면 엔진을 바꾼다 |
 
 ### 실행 결과 — `QrActionExecutor.execute`
@@ -146,4 +148,6 @@
 | `OpenUrl.warnings` 에 `UNREADABLE_HOST` | 호스트가 없거나 도메인 규칙(라벨 63자 등)에 맞지 않거나, 숫자로 끝나는데 IPv4 로 읽히지 않는다(`256.1.1.1`·`example.123`) — `host` 는 원문 호스트 그대로 | 열기 전에 경고한다 |
 | `OpenUrl.warnings` 에 `IP_ADDRESS` | 호스트가 IP 다. 브라우저처럼 `2130706433`·`0x7f000001`·`127.1` 같은 숫자 표기도 IPv4 로 읽어 `host` 를 `127.0.0.1` 로 보인다 | 열기 전에 경고한다 |
 | `OpenUrl.warnings` 에 `NON_WEB_SCHEME` | http·https 가 아닌 주소다 — 기본 실행기는 `Failed` 로 거절하고, 기본 확인창은 확인 단추를 보이지 않는다. `AppLinkPolicy` 로 허용한 스킴만 그 정책을 받은 실행기·확인창이 연다 | 열지 않거나, 허용한 앱 링크면 확인 뒤 연다(`QrActions.requiresConfirmation` 이 참) |
+| `ScannerState.lockOn` 이 false | 그 추적 번호가 지금 `codes` 에 없다(이미 사라짐·새 번호가 붙음) 또는 멈춘 상태다 | 최신 `codes` 의 번호로 다시 부른다 |
+| 고정이 저절로 풀림 | 고정된 코드가 추적에서 지워졌거나 화면 밖으로 나갔다. 다시 들어오면 새 번호라 다시 고정하지 않는다(`Tap`·`lockOn`) | 정상이다. 필요하면 다시 `lockOn` |
 | `deliveries` 에서 결과가 사라짐 | 구독자가 없을 때 넘긴 결과는 버린다. 느린 구독자에게는 최근 8개만 남긴다 | `CodeScanner` 를 쓰거나 상태를 만든 즉시 구독한다 |

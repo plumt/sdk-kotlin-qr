@@ -1,14 +1,48 @@
 package net.plumt.qr.scanner
 
 import androidx.annotation.StringRes
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import net.plumt.qr.QrPayload
 import net.plumt.qr.ScanResult
 import net.plumt.qr.scanner.action.QrAction
 import net.plumt.qr.scanner.action.UrlWarning
 import java.time.ZoneId
 
-/** 기본 칩·문구에 쓰는 값. 직접 만든 UI 에서도 같은 문구를 쓰고 싶을 때 부른다. */
+/** 기본 박스·칩·문구에 쓰는 값. 직접 만든 UI 에서도 같은 모양·문구를 쓰고 싶을 때 부른다. */
 public object ScannerDefaults {
+
+    /** 기본 박스 선 두께(고정·보통). */
+    public val BoxStrokeWidth: Dp = 3.dp
+
+    /** 기본 흐린 박스 선 두께. */
+    public val DimmedBoxStrokeWidth: Dp = 2.dp
+
+    /** 기본 박스 모서리 반지름. */
+    public val BoxCornerRadius: Dp = 8.dp
+
+    /** 기본 흐린 박스 색 — 반투명 흰색. */
+    public val DimmedBoxColor: Color = Color.White.copy(alpha = 0.5f)
+
+    /**
+     * [QrCodeBox] 모양. 바꾸지 않은 값은 기본 — 보통·고정 색은 테마의 `primary`, 흐린 색은 [DimmedBoxColor].
+     * 박스를 숨기려면 [CodeScanner] 에 `box = null` 을 넘긴다.
+     *
+     * @throws IllegalArgumentException 두께·반지름이 음수이거나 유한하지 않을 때
+     */
+    @Composable
+    public fun boxStyle(
+        color: Color = MaterialTheme.colorScheme.primary,
+        lockedColor: Color = MaterialTheme.colorScheme.primary,
+        dimmedColor: Color = DimmedBoxColor,
+        strokeWidth: Dp = BoxStrokeWidth,
+        lockedStrokeWidth: Dp = BoxStrokeWidth,
+        dimmedStrokeWidth: Dp = DimmedBoxStrokeWidth,
+        cornerRadius: Dp = BoxCornerRadius,
+    ): CodeBoxStyle = CodeBoxStyle(color, lockedColor, dimmedColor, strokeWidth, lockedStrokeWidth, dimmedStrokeWidth, cornerRadius)
 
     /** 칩에 보일 요약의 최대 글자 수(유니코드 코드 포인트). 넘으면 잘라 `…` 를 붙인다. */
     public const val SUMMARY_MAX_LENGTH: Int = 40

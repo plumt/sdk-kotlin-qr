@@ -60,6 +60,31 @@
 
 ### [Unreleased]
 
+### [0.1.0] - 미발행
+
+#### 추가
+- `CodeScanner(box = …)` 박스 슬롯 — `(@Composable (code, dimmed) -> Unit)?`. 코드 자리에 그 크기로 놓이고, `null` 이면 박스를 그리지 않는다.
+  기본은 새 공개 컴포저블 `QrCodeBox(code, dimmed, modifier, style)` 이다
+- `CodeBoxStyle`(`color`·`lockedColor`·`dimmedColor`·`strokeWidth`·`lockedStrokeWidth`·`dimmedStrokeWidth`·`cornerRadius`) · `ScannerDefaults.boxStyle(...)`(색 기본은 테마 `primary`) ·
+  `ScannerDefaults.BoxStrokeWidth`·`DimmedBoxStrokeWidth`·`BoxCornerRadius`·`DimmedBoxColor` — 기본 박스 모양 바꾸기
+- `CodeScanner(tapToDeliver = false)` — 박스 자리·칩 탭이 결과를 넘기지 않는다(자동 넘기기만). 오버레이를 숨겨도 탭 판정(`codeAt`)은 그대로다
+- `MultiLock`(`None`·`Tap`·`Nearest`·`Custom(select)`) · `ScanMode.Multi(lock, autoDeliver)` — 다중 추적에서 하나에 고정하고, 고정된 코드를 탭 없이 넘긴다.
+  `Tap` 은 박스 자리 탭으로 고정을 옮기거나 풀고(넘기지 않는다), `Nearest` 는 `Single` 과 같은 히스테리시스 규칙, `Custom` 은 앱 함수가 프레임마다 고른다
+  (던지면 그 프레임을 버리고 `onError` 로 알린다. 함수만 다른 모드는 `rememberScannerState` 가 같은 상태로 본다)
+- `ScannerState.lockOn(id)`·`unlock()` — 앱이 고정을 정한다. 어느 모드·정책보다 우선하고, 그 코드가 화면에서 사라지면 풀린다. `codes`·`lockedCode` 는 바로 바뀐다
+- 「카메라만」 스캐너 — `ScanMode.Single(autoDeliver = true)` + `box = null, chip = null` (README 예시)
+
+#### 변경
+- `TrackedCode.isLocked`·`ScannerState.lockedCode` 가 `ScanMode.Multi` 에서도 고정을 뜻한다(정책이 `None` 이고 `lockOn` 을 부르지 않으면 지금처럼 늘 false·null)
+- 기본 박스를 하나의 `Canvas` 대신 코드마다 놓는 `QrCodeBox` 로 그린다. 모양(색·두께·모서리 8dp)은 0.0.2 와 같다
+- `ScannerState.mode` 가 `MultiLock.Custom` 의 함수 교체를 반영한다(값은 읽기 전용 그대로)
+
+#### 변경(호환 깨짐)
+- `ScanMode.Multi` 가 `data object` 에서 클래스가 됐다 — `ScanMode.Multi` 를 `ScanMode.Multi()` 로 고친다. `when` 에서 `ScanMode.Multi ->` 는 `is ScanMode.Multi ->` 로 고친다.
+  `toString` 은 `Multi(lock=None, autoDeliver=false)` 다
+- `CodeScanner` 의 `chip` 이 nullable 이 되고 그 앞에 `box`·`tapToDeliver` 가 더해졌다. 이름 인자·끝 람다로 `chip` 을 넘기던 호출은 그대로 컴파일되지만,
+  바이너리 시그니처가 바뀌어 0.0.2 로 컴파일한 라이브러리는 다시 컴파일해야 한다
+
 ### [0.0.2] - 2026-11-10
 
 #### 추가

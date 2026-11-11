@@ -29,6 +29,14 @@ internal class LockSelector(private val options: LockOptions) {
         challengeCount = 0
     }
 
+    /** 고정을 [id] 로 맞추고 도전자 기록을 지운다(앱이 고정을 정했을 때). */
+    fun force(id: Long) {
+        if (lockedId == id) return
+        lockedId = id
+        challengerId = null
+        challengeCount = 0
+    }
+
     fun select(candidates: List<LockCandidate>, viewWidth: Float, viewHeight: Float): Long? {
         val cx = viewWidth / 2f
         val cy = viewHeight / 2f

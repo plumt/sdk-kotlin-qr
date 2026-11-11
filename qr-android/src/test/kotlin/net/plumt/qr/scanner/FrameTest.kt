@@ -68,7 +68,7 @@ class FrameAnalyzerTest {
 
     private class Harness(
         engine: ScanEngine,
-        mode: ScanMode = ScanMode.Multi,
+        mode: ScanMode = ScanMode.Multi(),
         options: ScannerOptions,
         var paused: Boolean = false,
         var reset: Boolean = false,
@@ -120,6 +120,25 @@ class FrameAnalyzerTest {
         }
         assertEquals(1, h.errors.size)
         assertEquals(3, h.snapshots.size)
+    }
+
+    @Test
+    fun customLockFailure_dropsFrame_reportsOnce_imageStillClosed() {
+        val boom = IllegalStateException("app")
+        val h = Harness(
+            FakeEngine { listOf(detAt("A", 100f, 100f)) },
+            mode = ScanMode.Multi(MultiLock.Custom { throw boom }),
+            options = opts,
+        )
+        repeat(2) {
+            val img = FakeImageProxy(640, 480, rotation = 90)
+            h.analyzer.analyze(img)
+            assertEquals(1, img.closeCount)
+        }
+        assertEquals(0, h.snapshots.size)
+        assertEquals(1, h.errors.size)
+        assertEquals("고정 선택 함수(MultiLock.Custom)가 실패했다", h.errors.single().message)
+        assertSame(boom, h.errors.single().cause)
     }
 
     @Test
@@ -233,7 +252,7 @@ class FrameAnalyzerTest {
         // 분석 스레드가 결과를 내는 중에 메인 스레드가 닫으면, 닫기는 그 결과가 끝날 때까지 기다리고 그 뒤로는 결과가 없다
         val inSink = java.util.concurrent.CountDownLatch(1)
         val release = java.util.concurrent.CountDownLatch(1)
-        val pipeline = ScanPipeline(ScanMode.Multi, opts)
+        val pipeline = ScanPipeline(ScanMode.Multi(), opts)
         val snapshots = java.util.Collections.synchronizedList(ArrayList<ScanSnapshot>())
         val analyzer = FrameAnalyzer(
             engine = FakeEngine { listOf(detAt("A", 100f, 100f)) },

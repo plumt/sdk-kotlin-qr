@@ -84,7 +84,13 @@ internal class FrameAnalyzer(
             if (closed) return
             if (consumeReset()) pipeline.reset()
             val (w, h) = viewSize()
-            sink(pipeline.process(detections, frame.uprightWidth, frame.uprightHeight, w, h, frame.timestampNanos))
+            val snapshot = try {
+                pipeline.process(detections, frame.uprightWidth, frame.uprightHeight, w, h, frame.timestampNanos)
+            } catch (e: CustomLockFailure) {
+                report(ScannerException("고정 선택 함수(MultiLock.Custom)가 실패했다", e.cause))
+                return
+            }
+            sink(snapshot)
         }
     }
 

@@ -7,7 +7,9 @@ import net.plumt.qr.ScanResult
  *
  * - [Single] — 미리보기 가운데에 가장 가까운 코드 하나에 고정(lock-on)한다. 여러 코드가 함께 보여도 고정이 깜빡이지 않게
  *   히스테리시스로 붙든다
- * - [Multi] — 보이는 코드를 모두 추적하고 코드마다 칩을 띄운다
+ * - [Multi] — 보이는 코드를 모두 추적하고 코드마다 칩을 띄운다. 고정 여부와 방식은 [MultiLock] 으로 고른다
+ *
+ * 두 모드 모두 [ScannerState.lockOn]·[ScannerState.unlock] 으로 앱이 고정을 직접 바꿀 수 있다.
  */
 public sealed interface ScanMode {
 
@@ -20,8 +22,62 @@ public sealed interface ScanMode {
      */
     public data class Single(val autoDeliver: Boolean = false) : ScanMode
 
-    /** 다중 추적 모드. 탭한 코드 하나를 넘긴다. */
-    public data object Multi : ScanMode
+    /**
+     * 다중 추적 모드. 보이는 코드를 모두 추적한다.
+     *
+     * @property lock 어떤 코드에 고정할지. 기본 [MultiLock.None] 은 고정하지 않는다(0.0.x 와 같다)
+     * @property autoDeliver true 면 고정된 코드를 탭 없이 넘긴다. 규칙은 [Single.autoDeliver] 와 같다.
+     *   고정이 없으면 넘기지 않는다 — [MultiLock.None] 에서는 [ScannerState.lockOn] 으로 고정한 코드만 넘긴다
+     */
+    public class Multi(
+        public val lock: MultiLock = MultiLock.None,
+        public val autoDeliver: Boolean = false,
+    ) : ScanMode {
+        override fun equals(other: Any?): Boolean = other is Multi && other.lock == lock && other.autoDeliver == autoDeliver
+
+        override fun hashCode(): Int = 31 * lock.hashCode() + autoDeliver.hashCode()
+
+        override fun toString(): String = "Multi(lock=$lock, autoDeliver=$autoDeliver)"
+    }
+}
+
+/**
+ * [ScanMode.Multi] 에서 어떤 코드에 고정(lock-on)할지.
+ *
+ * 어느 정책이든 [ScannerState.lockOn] 으로 고정한 코드가 우선이다. 고정된 코드가 화면에서 사라지면(추적에서 지워지거나
+ * 화면 밖) 고정이 풀리고 정책대로 다시 고른다.
+ */
+public sealed interface MultiLock {
+
+    /** 고정하지 않는다. 기본. [ScannerState.lockOn] 으로만 고정된다. */
+    public data object None : MultiLock
+
+    /**
+     * 사용자가 탭한 코드에 고정한다. [CodeScanner] 에서 코드 박스 자리를 탭하면 그 코드로 고정을 옮기고, 고정된 코드를 다시
+     * 탭하면 푼다 — 이때 박스 자리 탭은 결과를 넘기지 않는다(칩 탭·[ScanMode.Multi.autoDeliver] 로 넘긴다).
+     */
+    public data object Tap : MultiLock
+
+    /** 가운데에 가장 가까운 코드에 스스로 고정한다. [ScanMode.Single] 과 같은 규칙([LockOptions] 의 히스테리시스·연속 프레임). */
+    public data object Nearest : MultiLock
+
+    /**
+     * 앱이 고른다. [select] 는 고정이 없거나 [ScannerState.lockOn] 고정이 없는 프레임마다 분석 스레드에서 불린다.
+     *
+     * - 인자는 이번 프레임에 화면에 보이는 코드다. `isLocked` 는 직전 프레임의 고정을 뜻한다
+     * - 인자 중 하나를 돌려주면 그 코드(추적 번호로 맞춘다)에 고정하고, null 이나 목록에 없는 코드면 고정하지 않는다
+     * - 빨리 끝나야 한다(프레임마다 불린다). 예외를 던지면 그 프레임을 버리고 [ScannerException] 으로 한 번 알린다
+     *
+     * 비교는 [select] 의 동일성으로 한다. [rememberScannerState] 는 [select] 만 다른 모드를 같은 상태로 보고 새 함수로 바꾼다 —
+     * 인라인 람다를 넘겨도 재구성마다 카메라가 다시 열리지 않는다.
+     */
+    public class Custom(public val select: (codes: List<TrackedCode>) -> TrackedCode?) : MultiLock {
+        override fun equals(other: Any?): Boolean = other is Custom && other.select === select
+
+        override fun hashCode(): Int = System.identityHashCode(select)
+
+        override fun toString(): String = "Custom"
+    }
 }
 
 /** 미리보기 테두리 안의 사각형(픽셀, 왼쪽 위가 원점). 비교·해시는 값으로 한다. */
@@ -52,7 +108,8 @@ public data class CodeBounds(val left: Float, val top: Float, val right: Float, 
  * @property result 읽은 결과. `points` 는 바로 세운(회전을 적용한) 분석 이미지 좌표다
  * @property bounds 미리보기 뷰 좌표의 사각형(픽셀). 프레임 사이 흔들림을 줄이려고 부드럽게 따라간다
  * @property missedFrames 마지막으로 보인 뒤 놓친 프레임 수. 0 이면 이번 프레임에서 보였다
- * @property isLocked [ScanMode.Single] 에서 고정된 코드인가. [ScanMode.Multi] 에서는 언제나 false
+ * @property isLocked 고정(lock-on)된 코드인가. 한 번에 하나뿐이다. [ScanMode.Single] 은 가운데 고정, [ScanMode.Multi] 는 [MultiLock] 정책이나
+ *   [ScannerState.lockOn] 으로 고정된 코드다. 고정이 없으면 모두 false
  */
 public class TrackedCode(
     public val id: Long,
