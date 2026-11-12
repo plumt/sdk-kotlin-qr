@@ -60,7 +60,7 @@
 
 ### [Unreleased]
 
-### [0.1.0] - 미발행
+### [0.1.0] - 2026-11-11
 
 #### 추가
 - `CodeScanner(box = …)` 박스 슬롯 — `(@Composable (code, dimmed) -> Unit)?`. 코드 자리에 그 크기로 놓이고, `null` 이면 박스를 그리지 않는다.

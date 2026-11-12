@@ -6,8 +6,8 @@ QR·바코드를 만들고 읽고, 그 안의 내용(Wi-Fi·연락처·일정·O
 
 | 모듈 | 좌표 | 상태 | 내용 |
 |---|---|---|---|
-| `qr` | `net.plumt.qr:qr` | 0.0.2 미발행 | 만들기·읽기·내용 해석(jar) |
-| `qr-android` | `net.plumt.qr:qr-android` | 0.1.0 미발행 | 실시간 카메라 스캐너 Compose 컴포넌트·내용별 실행(aar). `qr` 을 함께 가져온다 |
+| `qr` | `net.plumt.qr:qr` | 0.0.2 | 만들기·읽기·내용 해석(jar) |
+| `qr-android` | `net.plumt.qr:qr-android` | 0.1.0 | 실시간 카메라 스캐너 Compose 컴포넌트·내용별 실행(aar). `qr` 을 함께 가져온다 |
 
 ## qr
 
